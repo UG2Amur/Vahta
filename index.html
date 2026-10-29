@@ -241,6 +241,13 @@ textarea.csv { width: 100%; height: 120px; font: 12px/1.4 var(--f-data); backgro
 .proc-row:first-child { border-top: 0; }
 .proc-row .pn { font-size: 14.5px; font-weight: 500; }
 .proc-row .in { padding: 9px 10px; font-size: 15px; }
+.role-row { display: grid; grid-template-columns: minmax(0, 1fr) 150px; gap: 10px; align-items: center; padding: 10px 0; border-top: 1px solid var(--line); min-height: 58px; }
+.role-row:first-child { border-top: 0; }
+.role-row .pn { font-size: 14.5px; font-weight: 500; }
+.role-row .chip { justify-self: start; }
+.role-row .in { padding: 9px 10px; font-size: 15px; }
+.wiz-top { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.wstep { display: flex; flex-direction: column; gap: 14px; }
 .status { font-size: 12.5px; color: var(--muted); display: flex; gap: 8px; align-items: center; }
 .status .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); flex: none; }
 .status .dot.ok { background: var(--good); }
@@ -298,14 +305,37 @@ textarea.csv { width: 100%; height: 120px; font: 12px/1.4 var(--f-data); backgro
     </header>
 
     <section class="card" id="welcome" hidden aria-labelledby="w-title">
-      <h2 id="w-title">Настрой под себя</h2>
-      <p class="w-text">Выбери компанию: тариф, налог, комиссия и фикс ЗамБрига подставятся сами. Проверь тариф и дату конца вахты. Всё остальное меняется в разделе «Настройки».</p>
-      <label class="field" for="w-company"><span>Компания</span><select class="in" id="w-company"></select></label>
-      <div class="row2">
+      <div class="wiz-top"><h2 id="w-title">Настрой под себя</h2><span class="hint" id="w-stepno">Шаг 1 из 3</span></div>
+      <div class="wstep" data-step="1">
+        <p class="w-text">Где работаешь? Ставки компании подставятся сами, тариф можно поправить.</p>
+        <label class="field" for="w-company"><span>Компания</span><select class="in" id="w-company"></select></label>
+        <label class="field" for="w-cname" id="w-cname-f" hidden><span>Название компании</span><input class="in" id="w-cname" autocomplete="off" maxlength="80" placeholder="ООО «…»"></label>
         <label class="field" for="w-tariff"><span>Тариф смены (100%), ₽</span><input class="in" id="w-tariff" inputmode="numeric" autocomplete="off"></label>
-        <label class="field" for="w-end"><span>Конец вахты</span><input class="in" type="date" id="w-end"></label>
       </div>
-      <button class="btn primary" type="button" id="w-ok">Всё верно, начать</button>
+      <div class="wstep" data-step="2" hidden>
+        <div class="field"><span class="flabel">Где чаще работаешь</span><div class="chips" id="w-proc" role="group" aria-label="Основной процесс"></div></div>
+        <div class="field"><span class="flabel">Бываешь на другой роли?</span>
+          <div class="chips">
+            <label class="chip" for="w-zam"><input type="checkbox" id="w-zam"> ЗамБриг</label>
+            <label class="chip" for="w-brig"><input type="checkbox" id="w-brig"> Бригадир</label>
+          </div>
+          <span class="hint">Если нет, ничего не отмечай: в форме смены будут только процесс и выработка.</span>
+        </div>
+      </div>
+      <div class="wstep" data-step="3" hidden>
+        <div class="field"><span class="flabel">График работы</span><div class="seg wrap-seg" id="w-sched" role="group" aria-label="График"></div></div>
+        <label class="field" for="w-cstart" id="w-cstart-f" hidden><span>Первый день текущего цикла смен</span><input class="in" type="date" id="w-cstart"></label>
+        <div class="field" id="w-days-f" hidden><span class="flabel">Рабочие дни</span><div class="days" id="w-days" role="group" aria-label="Рабочие дни"></div></div>
+        <label class="field" for="w-end"><span>Конец вахты</span><input class="in" type="date" id="w-end"></label>
+        <div class="row2">
+          <label class="field" for="w-adv"><span>Аванс в неделю, ₽</span><input class="in" id="w-adv" inputmode="numeric" autocomplete="off" placeholder="0, если нет"></label>
+          <label class="field" for="w-advday"><span>В какой день</span><select class="in" id="w-advday"><option value="1">понедельник</option><option value="2">вторник</option><option value="3">среда</option><option value="4">четверг</option><option value="5">пятница</option><option value="6">суббота</option><option value="0">воскресенье</option></select></label>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="btn ghost" type="button" id="w-back" hidden>Назад</button>
+        <button class="btn primary" type="button" id="w-next">Далее</button>
+      </div>
     </section>
 
     <section class="card" id="entry" aria-labelledby="f-title">
@@ -328,7 +358,7 @@ textarea.csv { width: 100%; height: 120px; font: 12px/1.4 var(--f-data); backgro
             <div class="field"><span class="flabel">Процесс</span>
               <div class="chips" id="f-proc" role="group" aria-label="Процесс"></div>
             </div>
-            <div><label class="chip" for="f-zam"><input type="checkbox" id="f-zam"> <span id="f-zam-l">ЗамБриг: фикс 5 000 ₽ + выработка</span></label></div>
+            <div class="field" id="f-role-f" hidden><span class="flabel">Роль в смене</span><div class="chips" id="f-role" role="group" aria-label="Роль"></div></div>
             <p class="fixnote" id="f-fixnote" hidden></p>
             <label class="field" for="f-pct" id="f-pct-f"><span id="f-pct-l">Выработка за смену</span>
               <span class="pct-wrap"><input class="in" id="f-pct" inputmode="decimal" autocomplete="off" placeholder="100"></span>
@@ -435,7 +465,14 @@ textarea.csv { width: 100%; height: 120px; font: 12px/1.4 var(--f-data); backgro
           </div>
           <label class="field" for="p-manual" id="p-manual-f" hidden><span>Свой средний %</span><input class="in" id="p-manual" inputmode="decimal" autocomplete="off" placeholder="110"></label>
           <label class="field" for="p-proc"><span>Процесс для прогноза</span><select class="in" id="p-proc"></select></label>
-          <div class="field"><span class="flabel">Рабочие дни по графику</span><div class="days" id="p-days" role="group" aria-label="Рабочие дни"></div></div>
+          <div class="field"><span class="flabel">График</span><div class="seg wrap-seg" id="p-sched" role="group" aria-label="График"></div></div>
+          <div class="seg" id="p-stype" role="group" aria-label="Тип своего графика" hidden><button type="button" data-st="week" aria-pressed="true">По дням недели</button><button type="button" data-st="cycle" aria-pressed="false">Цикл «через»</button></div>
+          <div class="field" id="p-days-f" hidden><span class="flabel">Рабочие дни</span><div class="days" id="p-days" role="group" aria-label="Рабочие дни"></div></div>
+          <div class="row2" id="p-cyc-f" hidden>
+            <label class="field" for="p-con"><span>Работаю, дней</span><input class="in" id="p-con" inputmode="numeric" autocomplete="off"></label>
+            <label class="field" for="p-coff"><span>Отдыхаю, дней</span><input class="in" id="p-coff" inputmode="numeric" autocomplete="off"></label>
+          </div>
+          <label class="field" for="p-cstart" id="p-cstart-f" hidden><span>Первый день любого цикла смен</span><input class="in" type="date" id="p-cstart"></label>
           <div class="row2">
             <label class="field" for="p-att"><span>Явка, % смен графика</span><input class="in" id="p-att" inputmode="decimal" autocomplete="off"></label>
             <label class="field" for="p-end"><span>Конец вахты</span><input class="in" type="date" id="p-end"></label>
@@ -464,7 +501,7 @@ textarea.csv { width: 100%; height: 120px; font: 12px/1.4 var(--f-data); backgro
 
   <!-- ========== НАСТРОЙКИ ========== -->
   <div class="view" data-view="set" id="v-set" hidden>
-    <div class="view-head"><h2 class="view-title">Настройки</h2><p>Компания, тарифы по процессам, налоги.</p></div>
+    <div class="view-head"><h2 class="view-title">Настройки</h2><p>Компания, роли, тарифы по процессам, налоги.</p></div>
     <section class="sec" aria-labelledby="s-comp">
       <h2 id="s-comp">Компания</h2>
       <label class="field" for="s-company"><span>Через кого работаешь</span><select class="in" id="s-company"></select></label>
@@ -478,11 +515,25 @@ textarea.csv { width: 100%; height: 120px; font: 12px/1.4 var(--f-data); backgro
       <div class="proc-list" id="s-procs"></div>
       <p class="hint">«%» — оплата по выработке: тариф × процент. «Фикс» — одна сумма за смену, процент не нужен.</p>
     </section>
+    <section class="sec" aria-labelledby="s-roles">
+      <h2 id="s-roles">Мои роли</h2>
+      <div class="proc-list">
+        <div class="role-row"><span class="pn">Сотрудник</span><span class="hint">всегда</span></div>
+        <div class="role-row" data-role="zam">
+          <label class="chip" for="r-zam-on"><input type="checkbox" id="r-zam-on"> ЗамБриг</label>
+          <label class="field" for="r-zam-fix"><span>Фикс за смену, ₽</span><input class="in" id="r-zam-fix" inputmode="numeric" autocomplete="off"></label>
+        </div>
+        <div class="role-row" data-role="brig">
+          <label class="chip" for="r-brig-on"><input type="checkbox" id="r-brig-on"> Бригадир</label>
+          <label class="field" for="r-brig-fix"><span>Фикс за смену, ₽</span><input class="in" id="r-brig-fix" inputmode="numeric" autocomplete="off"></label>
+        </div>
+      </div>
+      <p class="hint">Включённые роли появятся в форме смены. Оплата смены в роли: фикс + выработка сверху, если была.</p>
+    </section>
     <section class="sec" aria-labelledby="s-set">
       <h2 id="s-set">Ставки</h2>
-      <div class="set-grid">
-        <label class="field" for="s-tariff"><span>Основной тариф (100%), ₽</span><input class="in" id="s-tariff" inputmode="numeric" autocomplete="off"></label>
-        <label class="field" for="s-zam"><span>Фикс ЗамБрига за смену, ₽</span><input class="in" id="s-zam" inputmode="numeric" autocomplete="off"></label>
+      <label class="field" for="s-tariff"><span>Основной тариф (100%), ₽</span><input class="in" id="s-tariff" inputmode="numeric" autocomplete="off"></label>
+      <div class="row2">
         <label class="field" for="s-tax"><span>Налог, %</span><input class="in" id="s-tax" inputmode="decimal" autocomplete="off"></label>
         <label class="field" for="s-comm"><span>Комиссия, %</span><input class="in" id="s-comm" inputmode="decimal" autocomplete="off"></label>
       </div>
@@ -520,23 +571,32 @@ const PROCS = [
   { id: "sort", name: "Сортировка" }
 ];
 const COMPANIES = [
-  { id: "lr", name: "Логистические решения", tariff: 8600, tax: 0.06, comm: 0.015, zamFixed: 5000 },
-  { id: "home", name: "Хоум", tariff: 8600, tax: 0.06, comm: 0.015, zamFixed: 5000 },
-  { id: "other", name: "Другая компания" }
+  { id: "lr", name: "Логистические решения", tariff: 8600, tax: 0.06, comm: 0.015, zamFix: 5000, taxMode: "remainder" },
+  { id: "home", name: "Хоум", tariff: 8600, tax: 0.06, comm: 0.015, zamFix: 5000, taxMode: "remainder" },
+  { id: "other", name: "Другая компания", taxMode: "all" }
+];
+const ROLES = [{ id: "zam", name: "ЗамБриг", gen: "ЗамБрига" }, { id: "brig", name: "Бригадир", gen: "бригадира" }];
+const SCHED_PRESETS = [
+  { id: "61", label: "6/1", sched: { type: "week", days: [1, 2, 3, 4, 5, 6] } },
+  { id: "52", label: "5/2", sched: { type: "week", days: [1, 2, 3, 4, 5] } },
+  { id: "22", label: "2/2", sched: { type: "cycle", on: 2, off: 2 } },
+  { id: "33", label: "3/3", sched: { type: "cycle", on: 3, off: 3 } },
+  { id: "custom", label: "Свой" }
 ];
 const DEFAULT_CFG = {
   company: "lr", companyName: "", inn: "",
   tariff: 8600,          // основной тариф смены при 100%
   tax: 0.06, comm: 0.015,
-  zamFixed: 5000,        // фикс за смену ЗамБригом, выработка идёт сверху
+  roles: {},             // {zam|brig: {on, fix}} — фикс за смену в роли, выработка идёт сверху
   taxMode: "remainder",  // "remainder" — с остатка после авансов; "all" — со всей выработки
   procs: {},             // {id: {t: тариф или null, m: "pct" | "fixed"}}
   mainProc: "",          // процесс для прогноза; "" — самый частый
   endDate: "2026-12-30",
-  workDays: [1, 2, 3, 4, 5, 6],
+  sched: { type: "week", days: [1, 2, 3, 4, 5, 6] }, // или {type: "cycle", on, off, start}
+  schedPreset: "61",
   attendance: 1,
   basis: "all", manualPct: 1,
-  advAmount: 7500, advDay: 6,
+  advAmount: 0, advDay: 6,
   goal: 0                // цель «на руки» к концу вахты
 };
 
@@ -555,14 +615,29 @@ function procMode(cfg, id) { const o = cfg.procs && cfg.procs[id]; return o && o
 function hasFixed(r) { return r.fixed !== null && r.fixed !== undefined && r.fixed !== ""; }
 function isWork(r) { return r.kind === "work"; }
 function adjOf(r) { return (Number(r.bonus) || 0) - (Number(r.fine) || 0); }
-function isPending(r, cfg) { return isWork(r) && !hasFixed(r) && !r.zam && procMode(cfg, r.proc) === "pct" && r.pct == null; }
-function isPctShift(r, cfg) { return isWork(r) && !hasFixed(r) && !r.zam && procMode(cfg, r.proc) === "pct" && r.pct != null; }
+function roleOf(r) { return r.role || (r.zam ? "zam" : ""); }
+function roleName(id) { const x = ROLES.find(r => r.id === id); return x ? x.name : ""; }
+function roleFix(cfg, id) { const o = cfg.roles && cfg.roles[id]; return o ? Number(o.fix) || 0 : 0; }
+function isPending(r, cfg) { return isWork(r) && !hasFixed(r) && !roleOf(r) && procMode(cfg, r.proc) === "pct" && r.pct == null; }
+function isPctShift(r, cfg) { return isWork(r) && !hasFixed(r) && !roleOf(r) && procMode(cfg, r.proc) === "pct" && r.pct != null; }
+function schedOk(cfg) { const s = cfg.sched; return s.type === "cycle" ? s.on > 0 : s.days && s.days.length > 0; }
+function isWorkday(cfg, d) {
+  const s = cfg.sched;
+  if (s.type === "cycle") {
+    const len = (s.on || 0) + (s.off || 0);
+    if (!len) return false;
+    const st = s.start ? dnum(s.start) : 0;
+    return (((d - st) % len) + len) % len < s.on;
+  }
+  return s.days.includes(weekday(d));
+}
 
 function baseAmount(r, cfg) {
   if (!isWork(r)) return 0;
   if (hasFixed(r)) return Number(r.fixed) || 0;
   const t = procTariff(cfg, r.proc);
-  if (r.zam) return cfg.zamFixed + (r.pct != null ? t * r.pct : 0);
+  const role = roleOf(r);
+  if (role) return roleFix(cfg, role) + (r.pct != null ? t * r.pct : 0);
   if (procMode(cfg, r.proc) === "fixed") return t;
   return r.pct == null ? 0 : t * r.pct;
 }
@@ -590,9 +665,23 @@ function grossFor(goal, A, cfg) {
   return cfg.taxMode === "all" ? goal / (1 - r) : (goal - A * r) / (1 - r);
 }
 
+function presetOf(sched) {
+  const p = SCHED_PRESETS.find(x => x.sched && x.sched.type === sched.type && (sched.type === "cycle"
+    ? x.sched.on === sched.on && x.sched.off === sched.off
+    : x.sched.days.length === (sched.days || []).length && x.sched.days.every(d => sched.days.includes(d))));
+  return p ? p.id : "custom";
+}
 function normCfg(c) {
-  const cfg = Object.assign({}, DEFAULT_CFG, c || {});
-  cfg.procs = Object.assign({}, cfg.procs || {});
+  const src = c || {};
+  const cfg = Object.assign({}, DEFAULT_CFG, src);
+  cfg.procs = Object.assign({}, src.procs || {});
+  const r = src.roles || {};
+  const zfix = src.zamFixed != null ? src.zamFixed : 5000;  // старое поле
+  cfg.roles = { zam: Object.assign({ on: false, fix: zfix }, r.zam || {}), brig: Object.assign({ on: false, fix: 0 }, r.brig || {}) };
+  if (src.sched && src.sched.type) cfg.sched = Object.assign({}, src.sched, src.sched.days ? { days: src.sched.days.slice() } : {});
+  else cfg.sched = { type: "week", days: (src.workDays || DEFAULT_CFG.sched.days).slice() };
+  if (!src.schedPreset) cfg.schedPreset = presetOf(cfg.sched);
+  delete cfg.zamFixed; delete cfg.workDays;
   return cfg;
 }
 
@@ -633,9 +722,9 @@ function compute(records, cfgIn, today) {
   const workRecs = recs.filter(isWork);
   const lastN = recs.length ? dnum(recs[recs.length - 1].date) : null;
   let histAtt = null, schedDays = 0;
-  if (workRecs.length && cfg.workDays.length) {
+  if (workRecs.length && schedOk(cfg)) {
     const f = dnum(workRecs[0].date);
-    for (let d = f; d <= lastN; d++) if (cfg.workDays.includes(weekday(d))) schedDays++;
+    for (let d = f; d <= lastN; d++) if (isWorkday(cfg, d)) schedDays++;
     histAtt = schedDays ? workRecs.length / schedDays : null;
   }
 
@@ -655,7 +744,7 @@ function compute(records, cfgIn, today) {
   }
   for (let d = startN; d <= endN; d++) {
     const wk = weekday(d), att = cfg.attendance;
-    if (cfg.workDays.includes(wk)) addFc(d, att * perShift, 0, att, att * sdShift ** 2);
+    if (isWorkday(cfg, d)) addFc(d, att * perShift, 0, att, att * sdShift ** 2);
     if (cfg.advAmount > 0 && wk === cfg.advDay) addFc(d, 0, cfg.advAmount, 0, 0);
   }
 
@@ -729,7 +818,7 @@ function compute(records, cfgIn, today) {
   };
 }
 
-if (typeof module !== "undefined") module.exports = { PROCS, COMPANIES, DEFAULT_CFG, dnum, dstr, weekday, compute, payout, grossFor, shiftAmount, stats, normCfg, procTariff, procMode };
+if (typeof module !== "undefined") module.exports = { PROCS, COMPANIES, ROLES, SCHED_PRESETS, isWorkday, roleOf, DEFAULT_CFG, dnum, dstr, weekday, compute, payout, grossFor, shiftAmount, stats, normCfg, procTariff, procMode };
 
 </script>
 <script>
@@ -782,7 +871,7 @@ if (typeof module !== "undefined") module.exports = { PROCS, COMPANIES, DEFAULT_
   const S = {
     mode: "loading", loaded: false, readOnly: false, loadError: false, firstRun: false,
     recs: new Map(), cfg: normCfg({}), tab: "shift",
-    kind: "work", proc: "", editing: null, formTouched: false, formInit: false,
+    kind: "work", proc: "", role: "", editing: null, cfgHadRoles: false, formTouched: false, formInit: false,
     openMonths: new Set(), openInit: false, R: null
   };
   const TG = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
@@ -791,17 +880,18 @@ if (typeof module !== "undefined") module.exports = { PROCS, COMPANIES, DEFAULT_
   const CS = IN_TG && TG.CloudStorage && tgAtLeast("6.9") ? TG.CloudStorage : null;
   const LS_KEY = "vahta-helper-v1";
   const KIND_C = { work: "w", off: "o", sick: "s" }, KIND_D = { w: "work", o: "off", s: "sick" };
+  const ROLE_C = { zam: 1, brig: 2 }, ROLE_D = { 1: "zam", 2: "brig" };
   const cs = {
     getKeys: () => new Promise((ok, no) => CS.getKeys((e, v) => (e ? no(e) : ok(v || [])))),
     getItems: keys => new Promise((ok, no) => CS.getItems(keys, (e, v) => (e ? no(e) : ok(v || {})))),
     setItem: (k, v) => new Promise((ok, no) => CS.setItem(k, v, (e, r) => (e ? no(e) : ok(r)))),
     removeItem: k => new Promise((ok, no) => CS.removeItem(k, (e, r) => (e ? no(e) : ok(r))))
   };
-  // один ключ на месяц: m2026_10 → [[день, тип, %, ЗамБриг, фикс, аванс, заметка, процесс, премия, штраф, зарплата], …]
+  // один ключ на месяц: m2026_10 → [[день, тип, %, роль (1 ЗамБриг, 2 бригадир), фикс, аванс, заметка, процесс, премия, штраф, зарплата], …]
   const monthKeyOf = date => "m" + date.slice(0, 4) + "_" + date.slice(5, 7);
   function encodeMonth(recs, noteMax) {
     return JSON.stringify(recs.map(r => [
-      +r.date.slice(8, 10), KIND_C[r.kind] || "w", r.pct == null ? null : r.pct, r.zam ? 1 : 0,
+      +r.date.slice(8, 10), KIND_C[r.kind] || "w", r.pct == null ? null : r.pct, ROLE_C[roleOf(r)] || 0,
       hasFixed(r) ? Number(r.fixed) : null, Number(r.adv) || 0, (r.note || "").slice(0, noteMax),
       r.proc || "", Number(r.bonus) || 0, Number(r.fine) || 0, Number(r.paid) || 0
     ]));
@@ -812,7 +902,7 @@ if (typeof module !== "undefined") module.exports = { PROCS, COMPANIES, DEFAULT_
     try {
       return JSON.parse(raw).map(a => ({
         date: y + "-" + m + "-" + String(a[0]).padStart(2, "0"), kind: KIND_D[a[1]] || "work",
-        pct: a[2] == null ? null : a[2], zam: !!a[3], fixed: a[4] == null ? null : a[4], adv: a[5] || 0, note: a[6] || "",
+        pct: a[2] == null ? null : a[2], role: ROLE_D[+a[3]] || "", fixed: a[4] == null ? null : a[4], adv: a[5] || 0, note: a[6] || "",
         proc: a[7] || "", bonus: a[8] || 0, fine: a[9] || 0, paid: a[10] || 0
       }));
     } catch (e) { return []; }
@@ -824,6 +914,7 @@ if (typeof module !== "undefined") module.exports = { PROCS, COMPANIES, DEFAULT_
       const o = JSON.parse(raw);
       S.recs = new Map((o.recs || []).map(r => [r.date, r]));
       S.cfg = normCfg(o.cfg);
+      S.cfgHadRoles = !!(o.cfg && o.cfg.roles);
       S.firstRun = !o.cfg;
     } catch (e) { S.firstRun = true; }
   }
@@ -905,11 +996,13 @@ if (typeof module !== "undefined") module.exports = { PROCS, COMPANIES, DEFAULT_
         const recs = new Map();
         mk.forEach(k => decodeMonth(k, vals[k]).forEach(r => recs.set(r.date, r)));
         S.recs = recs;
-        if (vals.cfg) { try { S.cfg = normCfg(JSON.parse(vals.cfg)); } catch (e) { S.firstRun = true; } }
+        if (vals.cfg) { try { const raw = JSON.parse(vals.cfg); S.cfgHadRoles = !!raw.roles; S.cfg = normCfg(raw); } catch (e) { S.firstRun = true; } }
         else S.firstRun = true;
       } catch (e) { S.loadError = true; S.readOnly = true; }
     } else { S.mode = "local"; lsLoad(); }
     if (S.firstRun) S.cfg.endDate = dstr(dnum(todayStr()) + 61);
+    // раньше ЗамБриг был у всех: если в записях он есть, а ролей в настройках ещё нет — включаем
+    if (!S.firstRun && !S.cfgHadRoles && Array.from(S.recs.values()).some(r => roleOf(r) === "zam")) S.cfg.roles.zam.on = true;
     S.loaded = true;
     render();
   }
@@ -932,12 +1025,9 @@ if (typeof module !== "undefined") module.exports = { PROCS, COMPANIES, DEFAULT_
     const R = compute(Array.from(S.recs.values()), S.cfg, todayStr());
     S.R = R;
     if (S.loaded && !S.formInit) { S.formInit = true; if (!S.formTouched) fillForm(defaultDate()); }
-    const wel = $("#welcome");
-    wel.hidden = !(S.loaded && S.firstRun);
-    if (!wel.hidden) { setVal("w-company", R.cfg.company); setVal("w-tariff", String(R.cfg.tariff)); setVal("w-end", R.cfg.endDate); }
-    drawHero(R); drawMoney(R); drawForecast(R); drawMonths(R); drawProcs(R); drawLog(R); syncSettings(R); drawStatus(); drawProcChips(); updatePreview();
+    drawWizard(R);
+    drawHero(R); drawMoney(R); drawForecast(R); drawMonths(R); drawProcs(R); drawLog(R); syncSettings(R); drawStatus(); drawRoleChips(); drawProcChips(); updatePreview();
     if (S.tab === "fc") { drawTraj(R); drawPct(R); }
-    $("#f-zam-l").textContent = "ЗамБриг: фикс " + num(R.cfg.zamFixed) + " ₽ + выработка";
   }
 
   function drawHero(R) {
@@ -1101,7 +1191,7 @@ if (typeof module !== "undefined") module.exports = { PROCS, COMPANIES, DEFAULT_
       if (!s.fact && s.sd > 0) h += ` ± ${num(s.sd)}`;
       if (s.rec) {
         const r = s.rec;
-        if (r.kind === "work") h += `<br>${r.proc ? procName(r.proc).toLowerCase() + " · " : ""}${rub(shiftAmount(r, R.cfg))}${r.pct != null && !hasFixed(r) ? " · " + pc(r.pct) : ""}${r.zam ? " · ЗамБриг" : ""}`;
+        if (r.kind === "work") h += `<br>${r.proc ? procName(r.proc).toLowerCase() + " · " : ""}${rub(shiftAmount(r, R.cfg))}${r.pct != null && !hasFixed(r) ? " · " + pc(r.pct) : ""}${roleOf(r) ? " · " + roleName(roleOf(r)) : ""}`;
         else h += `<br>${r.kind === "sick" ? "больничный" : "выходной"}`;
         if (r.adv) h += ` · аванс ${num(r.adv)}`;
       } else if (s.dayV > 0) h += `<br>за день ≈ ${rub(s.dayV)}`;
@@ -1209,7 +1299,7 @@ if (typeof module !== "undefined") module.exports = { PROCS, COMPANIES, DEFAULT_
     if (r.kind === "work") {
       const pn = r.proc ? `<span>${esc(procName(r.proc))}</span>` : "";
       if (hasFixed(r)) what = pn + "<span>фикс.</span>";
-      else if (r.zam) what = `${pn}<span class="pill fact">ЗамБриг</span>${r.pct != null ? `<span class="p">+ ${pc(r.pct)}</span>` : ""}`;
+      else if (roleOf(r)) what = `${pn}<span class="pill fact">${roleName(roleOf(r))}</span>${r.pct != null ? `<span class="p">+ ${pc(r.pct)}</span>` : ""}`;
       else if (procMode(c, r.proc) === "fixed") what = pn + '<span class="muted">фикс</span>';
       else if (r.pct == null) what = (pn || "<span>Смена</span>") + '<span class="pill warn">нужен %</span>';
       else what = `${pn}<span class="p">${pc(r.pct)}</span>`;
@@ -1260,7 +1350,11 @@ if (typeof module !== "undefined") module.exports = { PROCS, COMPANIES, DEFAULT_
       <div class="seg mini" role="group" aria-label="Оплата: ${p.name}"><button type="button" data-pm="pct" aria-pressed="true">%</button><button type="button" data-pm="fixed" aria-pressed="false">Фикс</button></div>
     </div>`).join("");
     const order = [1, 2, 3, 4, 5, 6, 0];
-    $("#p-days").innerHTML = order.map(d => `<button type="button" data-day="${d}" aria-pressed="false">${WD[d]}</button>`).join("");
+    const days = order.map(d => `<button type="button" data-day="${d}" aria-pressed="false">${WD[d]}</button>`).join("");
+    $("#p-days").innerHTML = days; $("#w-days").innerHTML = days;
+    const sp = SCHED_PRESETS.map(p => `<button type="button" data-sp="${p.id}" aria-pressed="false">${p.label}</button>`).join("");
+    $("#p-sched").innerHTML = sp; $("#w-sched").innerHTML = sp;
+    $("#w-proc").innerHTML = PROCS.map(p => `<button type="button" data-proc="${p.id}" aria-pressed="false">${p.name}</button>`).join("");
   }
 
   function syncSettings(R) {
@@ -1277,7 +1371,15 @@ if (typeof module !== "undefined") module.exports = { PROCS, COMPANIES, DEFAULT_
     const want = `<option value="">${esc(autoTxt)}</option>` + PROCS.map(p => `<option value="${p.id}">${p.name}</option>`).join("");
     if (pp.dataset.sig !== autoTxt) { pp.innerHTML = want; pp.dataset.sig = autoTxt; }
     setVal("p-proc", c.mainProc || "");
-    $$("#p-days button").forEach(b => b.setAttribute("aria-pressed", String(c.workDays.includes(+b.dataset.day))));
+    const sch = c.sched, cyc = sch.type === "cycle", custom = c.schedPreset === "custom";
+    $$("#p-sched button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.sp === c.schedPreset)));
+    $("#p-stype").hidden = !custom;
+    $$("#p-stype button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.st === sch.type)));
+    $("#p-days-f").hidden = !(custom && !cyc);
+    $$("#p-days button").forEach(b => b.setAttribute("aria-pressed", String(!cyc && sch.days.includes(+b.dataset.day))));
+    $("#p-cyc-f").hidden = !(custom && cyc);
+    if (cyc) { setVal("p-con", String(sch.on)); setVal("p-coff", String(sch.off)); setVal("p-cstart", sch.start || ""); }
+    $("#p-cstart-f").hidden = !cyc;
     setVal("p-att", pctIn(c.attendance));
     setVal("p-end", c.endDate);
     setVal("p-adv", String(c.advAmount || 0));
@@ -1294,7 +1396,12 @@ if (typeof module !== "undefined") module.exports = { PROCS, COMPANIES, DEFAULT_
       $$(`.proc-row[data-proc="${p.id}"] button`).forEach(b => b.setAttribute("aria-pressed", String(b.dataset.pm === (o.m === "fixed" ? "fixed" : "pct"))));
     });
     setVal("s-tariff", String(c.tariff));
-    setVal("s-zam", String(c.zamFixed));
+    ROLES.forEach(r => {
+      const o = c.roles[r.id], cb = document.getElementById("r-" + r.id + "-on");
+      cb.checked = !!o.on;
+      setVal("r-" + r.id + "-fix", o.fix ? String(o.fix) : "");
+      document.getElementById("r-" + r.id + "-fix").closest(".field").hidden = !o.on;
+    });
     setVal("s-tax", pctIn(c.tax));
     setVal("s-comm", pctIn(c.comm));
     $$("#s-mode button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.mode === c.taxMode)));
@@ -1318,7 +1425,7 @@ if (typeof module !== "undefined") module.exports = { PROCS, COMPANIES, DEFAULT_
   }
   function lastProc() {
     const w = Array.from(S.recs.values()).filter(r => r.kind === "work" && r.proc).sort((a, b) => (a.date < b.date ? 1 : -1));
-    return w.length ? w[0].proc : "";
+    return w.length ? w[0].proc : (S.cfg.mainProc || "");
   }
   function setKind(k) {
     S.kind = k;
@@ -1331,8 +1438,15 @@ if (typeof module !== "undefined") module.exports = { PROCS, COMPANIES, DEFAULT_
     $$("button", el).forEach(b => b.setAttribute("aria-pressed", String(b.dataset.proc === S.proc)));
     procUi();
   }
+  function drawRoleChips() {
+    const c = S.cfg, el = $("#f-role");
+    const roles = ROLES.filter(r => (c.roles[r.id] && c.roles[r.id].on) || S.role === r.id);
+    $("#f-role-f").hidden = !roles.length || S.kind !== "work";
+    el.innerHTML = `<button type="button" data-role="" aria-pressed="${!S.role}">Сотрудник</button>` +
+      roles.map(r => `<button type="button" data-role="${r.id}" aria-pressed="${S.role === r.id}">${r.name}</button>`).join("");
+  }
   function procUi() {
-    const c = S.cfg, z = $("#f-zam").checked, fixed = procMode(c, S.proc) === "fixed";
+    const c = S.cfg, z = !!S.role, fixed = procMode(c, S.proc) === "fixed";
     const fn = $("#f-fixnote");
     fn.hidden = !(fixed && !z);
     if (fixed && !z) fn.textContent = `${procName(S.proc)}: фикс ${rub(procTariff(c, S.proc))} за смену, процент не нужен.`;
@@ -1347,7 +1461,7 @@ if (typeof module !== "undefined") module.exports = { PROCS, COMPANIES, DEFAULT_
     setKind(r ? r.kind : "work");
     S.proc = r && r.kind === "work" ? (r.proc || "") : lastProc();
     $("#f-pct").value = r && r.pct != null ? pctIn(r.pct) : "";
-    $("#f-zam").checked = !!(r && r.zam);
+    S.role = r && r.kind === "work" ? roleOf(r) : "";
     $("#f-fixed").value = r && hasFixed(r) ? String(r.fixed) : "";
     $("#f-adv").value = r && r.adv ? String(r.adv) : "";
     $("#f-bonus").value = r && r.bonus ? String(r.bonus) : "";
@@ -1357,7 +1471,7 @@ if (typeof module !== "undefined") module.exports = { PROCS, COMPANIES, DEFAULT_
     $("#f-more").open = !!(r && (hasFixed(r) || r.note || r.bonus || r.fine || r.paid));
     resetDel(); showErr("");
     $$("#f .in").forEach(i => i.classList.remove("bad"));
-    drawProcChips(); updateFormMeta(); updatePreview();
+    drawRoleChips(); drawProcChips(); updateFormMeta(); updatePreview();
     $$(".r.sel").forEach(b => b.classList.remove("sel"));
     if (S.editing) { const b = document.querySelector(`.r[data-date="${date}"]`); if (b) b.classList.add("sel"); }
   }
@@ -1375,7 +1489,7 @@ if (typeof module !== "undefined") module.exports = { PROCS, COMPANIES, DEFAULT_
     return {
       date: $("#f-date").value, kind, proc: work ? S.proc : "",
       pct: work ? parsePct($("#f-pct").value) : null,
-      zam: work && $("#f-zam").checked,
+      role: work ? S.role : "",
       fixed: work ? parseMoney($("#f-fixed").value) : null,
       adv: parseMoney($("#f-adv").value), paid: parseMoney($("#f-paid").value),
       bonus: parseMoney($("#f-bonus").value), fine: parseMoney($("#f-fine").value),
@@ -1399,7 +1513,7 @@ if (typeof module !== "undefined") module.exports = { PROCS, COMPANIES, DEFAULT_
     const t = procTariff(c, r.proc), rec = Object.assign({}, r, { bonus: money0(r.bonus), fine: money0(r.fine) });
     let base;
     if (r.fixed != null) base = "фикс. оплата";
-    else if (r.zam) base = "фикс ЗамБрига " + num(c.zamFixed) + (r.pct != null ? " + " + num(t) + " × " + pc(r.pct) : "");
+    else if (r.role) base = "фикс " + ROLES.find(x => x.id === r.role).gen + " " + num(roleFix(c, r.role)) + (r.pct != null ? " + " + num(t) + " × " + pc(r.pct) : "");
     else if (procMode(c, r.proc) === "fixed") base = procName(r.proc) + ": фикс " + num(t);
     else if (r.pct == null) {
       fEl.textContent = (S.editing ? "% не внесён: пока 0 ₽, в прогнозе по среднему" : "введи % выработки") + adjTxt + moneyTxt;
@@ -1413,14 +1527,17 @@ if (typeof module !== "undefined") module.exports = { PROCS, COMPANIES, DEFAULT_
   function resetDel() { clearTimeout(delArmed); delArmed = null; $("#f-del").textContent = "Удалить"; }
 
   function bindForm() {
-    $("#f-kind").addEventListener("click", e => { const b = e.target.closest("button[data-kind]"); if (!b) return; setKind(b.dataset.kind); updatePreview(); });
+    $("#f-kind").addEventListener("click", e => { const b = e.target.closest("button[data-kind]"); if (!b) return; setKind(b.dataset.kind); drawRoleChips(); updatePreview(); });
     $("#f-proc").addEventListener("click", e => {
       const b = e.target.closest("button[data-proc]"); if (!b) return;
       S.proc = S.proc === b.dataset.proc ? "" : b.dataset.proc;
       drawProcChips(); updatePreview();
     });
     ["f-pct", "f-adv", "f-fixed", "f-note", "f-bonus", "f-fine", "f-paid"].forEach(id => $("#" + id).addEventListener("input", () => { showErr(""); updatePreview(); }));
-    $("#f-zam").addEventListener("change", () => { procUi(); updatePreview(); });
+    $("#f-role").addEventListener("click", e => {
+      const b = e.target.closest("button[data-role]"); if (!b) return;
+      S.role = b.dataset.role; drawRoleChips(); procUi(); updatePreview();
+    });
     $("#f-date").addEventListener("change", () => { S.formTouched = true; const v = $("#f-date").value; if (v) fillForm(v); else updateFormMeta(); });
     $("#f").addEventListener("submit", e => {
       e.preventDefault();
@@ -1429,7 +1546,7 @@ if (typeof module !== "undefined") module.exports = { PROCS, COMPANIES, DEFAULT_
       if (Number.isNaN(r.pct)) return showErr("Не понял процент. Напиши число, например 113 или 1,13.");
       if ([r.fixed, r.adv, r.paid, r.bonus, r.fine].some(v => Number.isNaN(v))) return showErr("Сумма должна быть числом, например 7500.");
       if (S.readOnly) return showErr("Смены не загрузились из Telegram, поэтому сохранение выключено. Закрой приложение и открой снова.");
-      const rec = { date: r.date, kind: r.kind, proc: r.proc, pct: r.pct, zam: !!r.zam, fixed: r.fixed, adv: money0(r.adv), paid: money0(r.paid), bonus: money0(r.bonus), fine: money0(r.fine), note: r.note };
+      const rec = { date: r.date, kind: r.kind, proc: r.proc, pct: r.pct, role: r.role || "", fixed: r.fixed, adv: money0(r.adv), paid: money0(r.paid), bonus: money0(r.bonus), fine: money0(r.fine), note: r.note };
       const wasEdit = S.recs.has(r.date), n = dnum(r.date);
       S.formTouched = true;
       saveRec(rec);
@@ -1467,12 +1584,12 @@ if (typeof module !== "undefined") module.exports = { PROCS, COMPANIES, DEFAULT_
       const R = S.R; if (!R) return;
       const fmtN = v => String(Math.round(v * 10000) / 10000).replace(".", ",");
       const kindRu = { work: "Смена", off: "Выходной", sick: "Больничный" };
-      const lines = ["Дата;День;Тип;Процесс;% выработки;ЗамБриг;Фикс. сумма;Премия;Штраф;Начислено;Аванс;Зарплата;Заметка"];
+      const lines = ["Дата;День;Тип;Процесс;% выработки;Роль;Фикс. сумма;Премия;Штраф;Начислено;Аванс;Зарплата;Заметка"];
       R.recs.forEach(r => {
         const p = parts(dnum(r.date));
         lines.push([
           String(p.d).padStart(2, "0") + "." + String(p.m).padStart(2, "0") + "." + p.y, WD[weekday(dnum(r.date))], kindRu[r.kind] || r.kind,
-          r.proc ? procName(r.proc) : "", r.pct != null ? fmtN(r.pct) : "", r.zam ? "да" : "", hasFixed(r) ? r.fixed : "",
+          r.proc ? procName(r.proc) : "", r.pct != null ? fmtN(r.pct) : "", roleOf(r) ? roleName(roleOf(r)) : "", hasFixed(r) ? r.fixed : "",
           r.bonus || "", r.fine || "", Math.round(shiftAmount(r, R.cfg)), r.adv || "", r.paid || "", (r.note || "").replace(/[;\t\n]/g, ",")
         ].join(";"));
       });
@@ -1503,7 +1620,7 @@ if (typeof module !== "undefined") module.exports = { PROCS, COMPANIES, DEFAULT_
         got.push({
           date: m[3] + "-" + m[2].padStart(2, "0") + "-" + m[1].padStart(2, "0"), kind, proc: kind === "work" ? proc : "",
           pct: kind === "work" && pct != null && !Number.isNaN(pct) ? pct : null,
-          zam: kind === "work" && /^(да|1|true)$/i.test(f[col.zam] || ""),
+          role: kind !== "work" ? "" : /^(да|1|true)$|зам/i.test(f[col.zam] || "") ? "zam" : /бриг/i.test(f[col.zam] || "") ? "brig" : "",
           fixed: kind === "work" && fixed != null && !Number.isNaN(fixed) ? fixed : null,
           adv: val(col.adv), paid: val(col.paid), bonus: val(col.bonus), fine: val(col.fine),
           note: (f[col.note] || "").slice(0, 120)
@@ -1523,24 +1640,70 @@ if (typeof module !== "undefined") module.exports = { PROCS, COMPANIES, DEFAULT_
   function applyCompany(id) {
     const co = COMPANIES.find(x => x.id === id);
     const patch = { company: id };
-    if (co && co.tariff) Object.assign(patch, { tariff: co.tariff, tax: co.tax, comm: co.comm, zamFixed: co.zamFixed });
+    if (co && co.taxMode) patch.taxMode = co.taxMode;
+    if (co && co.tariff) {
+      Object.assign(patch, { tariff: co.tariff, tax: co.tax, comm: co.comm });
+      patch.roles = Object.assign({}, S.cfg.roles, { zam: Object.assign({}, S.cfg.roles.zam, { fix: co.zamFix }) });
+    }
     return patch;
   }
 
+  /* ---------------- Анкета первого запуска ---------------- */
+  const W = { step: 1, proc: "", sched: "61", days: [1, 2, 3, 4, 5, 6] };
+  function drawWizard(R) {
+    const wel = $("#welcome");
+    wel.hidden = !(S.loaded && S.firstRun);
+    $("#entry").hidden = !wel.hidden;  // пока идёт анкета, форму смены не показываем
+    if (wel.hidden) return;
+    const c = R.cfg;
+    $$(".wstep", wel).forEach(st => { st.hidden = +st.dataset.step !== W.step; });
+    $("#w-stepno").textContent = "Шаг " + W.step + " из 3";
+    $("#w-back").hidden = W.step === 1;
+    $("#w-next").textContent = W.step === 3 ? "Готово, начать" : "Далее";
+    setVal("w-company", c.company);
+    $("#w-cname-f").hidden = c.company !== "other";
+    setVal("w-tariff", String(c.tariff));
+    $$("#w-proc button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.proc === W.proc)));
+    $$("#w-sched button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.sp === W.sched)));
+    const pr = SCHED_PRESETS.find(p => p.id === W.sched);
+    $("#w-cstart-f").hidden = !(pr && pr.sched && pr.sched.type === "cycle");
+    if (!$("#w-cstart").value) $("#w-cstart").value = todayStr();
+    $("#w-days-f").hidden = W.sched !== "custom";
+    $$("#w-days button").forEach(b => b.setAttribute("aria-pressed", String(W.days.includes(+b.dataset.day))));
+    setVal("w-end", c.endDate);
+    setVal("w-adv", c.advAmount ? String(c.advAmount) : "");
+    setVal("w-advday", String(c.advDay));
+  }
   function bindWelcome() {
-    $("#w-company").addEventListener("change", e => {
-      S.cfg = normCfg(Object.assign({}, S.cfg, applyCompany(e.target.value)));
-      setVal("w-tariff", String(S.cfg.tariff));
-      render();
+    const upd = patch => { S.cfg = normCfg(Object.assign({}, S.cfg, patch)); };
+    $("#w-company").addEventListener("change", e => { upd(applyCompany(e.target.value)); render(); });
+    $("#w-cname").addEventListener("input", e => upd({ companyName: e.target.value.trim().slice(0, 80) }));
+    $("#w-tariff").addEventListener("input", e => { const v = parseMoney(e.target.value); const ok = v > 0; e.target.classList.toggle("bad", !ok && e.target.value.trim() !== ""); if (ok) upd({ tariff: v }); });
+    $("#w-end").addEventListener("change", e => { if (/^\d{4}-\d{2}-\d{2}$/.test(e.target.value)) upd({ endDate: e.target.value }); });
+    $("#w-adv").addEventListener("input", e => { const v = parseMoney(e.target.value); if (v == null || (!Number.isNaN(v) && v >= 0)) upd({ advAmount: v || 0 }); });
+    $("#w-advday").addEventListener("change", e => upd({ advDay: +e.target.value }));
+    $("#w-proc").addEventListener("click", e => { const b = e.target.closest("button[data-proc]"); if (!b) return; W.proc = W.proc === b.dataset.proc ? "" : b.dataset.proc; drawWizard(S.R); });
+    $("#w-sched").addEventListener("click", e => { const b = e.target.closest("button[data-sp]"); if (!b) return; W.sched = b.dataset.sp; drawWizard(S.R); });
+    $("#w-days").addEventListener("click", e => {
+      const b = e.target.closest("button[data-day]"); if (!b) return;
+      const d = +b.dataset.day, set = new Set(W.days);
+      if (set.has(d)) set.delete(d); else set.add(d);
+      W.days = Array.from(set).sort(); drawWizard(S.R);
     });
-    $("#w-ok").addEventListener("click", () => {
-      const t = parseMoney($("#w-tariff").value), e = $("#w-end").value;
-      const patch = {};
-      if (t && t > 0) patch.tariff = t;
-      if (/^\d{4}-\d{2}-\d{2}$/.test(e)) patch.endDate = e;
+    $("#w-back").addEventListener("click", () => { W.step = Math.max(1, W.step - 1); drawWizard(S.R); });
+    $("#w-next").addEventListener("click", () => {
+      if (W.step < 3) { W.step++; drawWizard(S.R); $("#welcome").scrollIntoView({ block: "start" }); return; }
+      if (W.sched === "custom" && !W.days.length) { toast("Отметь хотя бы один рабочий день."); return; }
+      const pr = SCHED_PRESETS.find(p => p.id === W.sched);
+      const sched = W.sched === "custom" ? { type: "week", days: W.days.slice() }
+        : Object.assign({}, pr.sched, pr.sched.type === "cycle" ? { start: $("#w-cstart").value || todayStr() } : { days: pr.sched.days.slice() });
+      upd({
+        mainProc: W.proc, schedPreset: W.sched, sched,
+        roles: { zam: Object.assign({}, S.cfg.roles.zam, { on: $("#w-zam").checked }), brig: Object.assign({}, S.cfg.roles.brig, { on: $("#w-brig").checked }) }
+      });
       S.firstRun = false;
-      S.cfg = normCfg(Object.assign({}, S.cfg, patch));
       if (!S.readOnly) saveCfgNow();
+      if (!S.editing && !S.formTouched) S.proc = W.proc;
       render(); haptic("success");
       toast("Готово. Вноси смену после выхода.");
     });
@@ -1560,9 +1723,39 @@ if (typeof module !== "undefined") module.exports = { PROCS, COMPANIES, DEFAULT_
     $("#p-basis").addEventListener("click", e => { const b = e.target.closest("button[data-basis]"); if (b) setCfg({ basis: b.dataset.basis }); });
     $("#p-days").addEventListener("click", e => {
       const b = e.target.closest("button[data-day]"); if (!b) return;
-      const d = +b.dataset.day, set = new Set(S.cfg.workDays);
+      const d = +b.dataset.day, set = new Set(S.cfg.sched.days || []);
       if (set.has(d)) set.delete(d); else set.add(d);
-      setCfg({ workDays: Array.from(set).sort() });
+      setCfg({ sched: { type: "week", days: Array.from(set).sort() } });
+    });
+    $("#p-sched").addEventListener("click", e => {
+      const b = e.target.closest("button[data-sp]"); if (!b) return;
+      const id = b.dataset.sp;
+      if (id === "custom") { setCfg({ schedPreset: "custom" }); return; }
+      const pr = SCHED_PRESETS.find(p => p.id === id), cur = S.cfg.sched;
+      const sched = pr.sched.type === "cycle"
+        ? Object.assign({}, pr.sched, { start: cur.type === "cycle" && cur.start ? cur.start : todayStr() })
+        : { type: "week", days: pr.sched.days.slice() };
+      setCfg({ schedPreset: id, sched });
+    });
+    $("#p-stype").addEventListener("click", e => {
+      const b = e.target.closest("button[data-st]"); if (!b || b.dataset.st === S.cfg.sched.type) return;
+      setCfg({ sched: b.dataset.st === "cycle" ? { type: "cycle", on: 2, off: 2, start: todayStr() } : { type: "week", days: [1, 2, 3, 4, 5, 6] } });
+    });
+    const cycNum = (id, key) => $("#" + id).addEventListener("input", e => {
+      const v = parseInt(e.target.value, 10), ok = v >= 1 && v <= 30;
+      e.target.classList.toggle("bad", !ok && e.target.value.trim() !== "");
+      if (ok && S.cfg.sched.type === "cycle") setCfg({ sched: Object.assign({}, S.cfg.sched, { [key]: v }) });
+    });
+    cycNum("p-con", "on"); cycNum("p-coff", "off");
+    $("#p-cstart").addEventListener("change", e => { if (/^\d{4}-\d{2}-\d{2}$/.test(e.target.value) && S.cfg.sched.type === "cycle") setCfg({ sched: Object.assign({}, S.cfg.sched, { start: e.target.value }) }); });
+    ROLES.forEach(r => {
+      const setRole = patch => setCfg({ roles: Object.assign({}, S.cfg.roles, { [r.id]: Object.assign({}, S.cfg.roles[r.id], patch) }) });
+      $("#r-" + r.id + "-on").addEventListener("change", e => setRole({ on: e.target.checked }));
+      $("#r-" + r.id + "-fix").addEventListener("input", e => {
+        const v = parseMoney(e.target.value), ok = v == null || (!Number.isNaN(v) && v >= 0);
+        e.target.classList.toggle("bad", !ok);
+        if (ok) setRole({ fix: v || 0 });
+      });
     });
     $("#s-mode").addEventListener("click", e => { const b = e.target.closest("button[data-mode]"); if (b) setCfg({ taxMode: b.dataset.mode }); });
     $("#fc-scen").addEventListener("click", e => { const b = e.target.closest("[data-att]"); if (b) { setCfg({ attendance: +b.dataset.att }); toast("Явка в прогнозе: " + pc(+b.dataset.att)); } });
@@ -1609,7 +1802,6 @@ if (typeof module !== "undefined") module.exports = { PROCS, COMPANIES, DEFAULT_
     bindNum("p-att", att, "attendance", v => v >= 0 && v <= 1.5);
     bindNum("p-adv", parseMoney, "advAmount", v => v >= 0);
     bindNum("s-tariff", parseMoney, "tariff", v => v > 0);
-    bindNum("s-zam", parseMoney, "zamFixed", v => v >= 0);
     bindNum("s-tax", frac, "tax", v => v >= 0 && v < 1);
     bindNum("s-comm", frac, "comm", v => v >= 0 && v < 1);
     $("#p-end").addEventListener("change", e => { if (/^\d{4}-\d{2}-\d{2}$/.test(e.target.value)) setCfg({ endDate: e.target.value }); });
