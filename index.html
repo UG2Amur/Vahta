@@ -1,0 +1,1411 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Вахтовый помощник</title>
+<script src="https://telegram.org/js/telegram-web-app.js?64"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Oswald:wght@500;600&display=swap">
+<style>
+/* Смена-лист: одна колонка до 780px; шапка как складская этикетка с полосой разметки пола; дальше ввод смены, итог вахты, траектория, месяцы, журнал. */
+:root {
+  --bg: #E7EAED;
+  --surface: #F8F9FA;
+  --surface-2: #DFE3E7;
+  --ink: #14181D;
+  --ink-2: #434C57;
+  --muted: #69727D;
+  --line: #CDD3D9;
+  --accent: #E2560B;
+  --accent-ink: #A9400A;
+  --accent-soft: #F6D8C4;
+  --band: rgba(226, 86, 11, 0.16);
+  --bar: #8D97A3;
+  --stripe: #14181D;
+  --good: #2C7449;
+  --warn: #8F5B0E;
+  --warn-soft: #F4E4C3;
+  --bad: #B3362B;
+  --bad-soft: #F5D9D5;
+  --shadow: 0 1px 0 rgba(20, 24, 29, 0.06), 0 6px 18px -10px rgba(20, 24, 29, 0.28);
+  --f-display: "Oswald", "Arial Narrow", "Roboto Condensed", sans-serif;
+  --f-body: "Golos Text", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --f-data: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111418; --surface: #1A1E23; --surface-2: #252B32; --ink: #E9ECEF; --ink-2: #BAC2CB; --muted: #8E98A4; --line: #2F363E;
+    --accent: #FF7A33; --accent-ink: #FF9B63; --accent-soft: #4A2A18; --band: rgba(255, 122, 51, 0.2); --bar: #6E7884; --stripe: #0A0C0E;
+    --good: #5DBB84; --warn: #E2AE55; --warn-soft: #3D3018; --bad: #F07468; --bad-soft: #43221F;
+    --shadow: 0 1px 0 rgba(0, 0, 0, 0.3), 0 8px 22px -12px rgba(0, 0, 0, 0.7);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111418; --surface: #1A1E23; --surface-2: #252B32; --ink: #E9ECEF; --ink-2: #BAC2CB; --muted: #8E98A4; --line: #2F363E;
+  --accent: #FF7A33; --accent-ink: #FF9B63; --accent-soft: #4A2A18; --band: rgba(255, 122, 51, 0.2); --bar: #6E7884; --stripe: #0A0C0E;
+  --good: #5DBB84; --warn: #E2AE55; --warn-soft: #3D3018; --bad: #F07468; --bad-soft: #43221F;
+  --shadow: 0 1px 0 rgba(0, 0, 0, 0.3), 0 8px 22px -12px rgba(0, 0, 0, 0.7);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+[hidden] { display: none !important; }
+img { max-width: 100%; }
+body {
+  margin: 0;
+  background: var(--bg); color: var(--ink);
+  font: 15px/1.5 var(--f-body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  -webkit-text-size-adjust: 100%;
+}
+.wrap { max-width: 780px; margin: 0 auto; padding-block: 18px 72px; display: flex; flex-direction: column; gap: 30px; }
+h1, h2, h3 { margin: 0; text-wrap: balance; }
+h2 {
+  font: 600 15px/1.2 var(--f-display); letter-spacing: 0.09em; text-transform: uppercase; color: var(--ink);
+  display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
+}
+h2 .h-note { font: 400 13px/1.3 var(--f-body); letter-spacing: 0; text-transform: none; color: var(--muted); }
+p { margin: 0; }
+.num, .mono { font-family: var(--f-data); font-variant-numeric: tabular-nums; }
+.muted { color: var(--muted); }
+.sec { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* ---------- Шапка-этикетка ---------- */
+.label {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 6px; overflow: hidden; box-shadow: var(--shadow);
+}
+.stripe { height: 10px; background: repeating-linear-gradient(-45deg, var(--accent) 0 9px, var(--stripe) 9px 18px); }
+.label-in { padding: 16px 18px 18px; display: flex; flex-direction: column; gap: 16px; }
+.label-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
+.eyebrow { font: 500 12px/1.2 var(--f-data); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+h1 { font: 600 34px/1 var(--f-display); letter-spacing: 0.01em; text-transform: uppercase; margin-top: 6px; }
+.tariff-tag {
+  font: 500 12px/1 var(--f-data); border: 1.5px solid var(--ink); border-radius: 3px; padding: 7px 9px; white-space: nowrap; align-self: flex-start;
+}
+.hero-nums { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 20px; border-top: 1.5px dashed var(--line); padding-top: 14px; }
+.hero-k { font-size: 12.5px; color: var(--muted); }
+.hero-v { font: 600 clamp(26px, 7.6vw, 38px)/1.08 var(--f-display); letter-spacing: 0.005em; font-variant-numeric: tabular-nums; margin-top: 2px; white-space: nowrap; }
+.hero-v.accent { color: var(--accent-ink); }
+.hero-s { font-size: 13px; color: var(--ink-2); margin-top: 4px; }
+@media (max-width: 380px) { .hero-nums { grid-template-columns: 1fr; } }
+
+/* ---------- Форма смены ---------- */
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; box-shadow: var(--shadow); padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+.form-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.form-head h2 .tag { font: 500 11px/1 var(--f-data); letter-spacing: 0.04em; padding: 4px 6px; border-radius: 3px; background: var(--accent-soft); color: var(--accent-ink); }
+.field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.field > span, .flabel { font-size: 12.5px; color: var(--muted); }
+.in {
+  width: 100%; min-width: 0; background: var(--bg); border: 1.5px solid var(--line); border-radius: 8px;
+  padding: 11px 12px; font-size: 16px; line-height: 1.25;
+}
+.in:focus { border-color: var(--accent); outline: none; }
+.in.bad { border-color: var(--bad); }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.date-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: end; }
+.wdname { font: 600 22px/1 var(--f-display); text-transform: uppercase; padding-bottom: 10px; min-width: 2.2em; text-align: right; }
+.seg { display: flex; gap: 3px; padding: 3px; background: var(--surface-2); border-radius: 9px; }
+.seg button { flex: 1; min-width: 0; border: 0; background: transparent; border-radius: 7px; padding: 9px 6px; font-size: 14px; color: var(--ink-2); }
+.seg button[aria-pressed="true"] { background: var(--surface); color: var(--ink); font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,.12); }
+.pct-wrap { position: relative; display: block; }
+.pct-wrap .in { font: 600 28px/1.1 var(--f-display); padding: 10px 40px 10px 14px; letter-spacing: 0.01em; }
+.pct-wrap::after { content: "%"; position: absolute; right: 14px; top: 50%; transform: translateY(-50%); font: 600 24px/1 var(--f-display); color: var(--muted); pointer-events: none; }
+.chip {
+  display: inline-flex; align-items: center; gap: 8px; border: 1.5px solid var(--line); border-radius: 999px; padding: 8px 12px;
+  background: var(--bg); font-size: 14px; user-select: none; cursor: pointer;
+}
+.chip input { accent-color: var(--accent); width: 16px; height: 16px; margin: 0; }
+.chip:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
+.zam-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+details.more > summary { cursor: pointer; color: var(--ink-2); font-size: 14px; list-style: none; display: inline-flex; gap: 6px; align-items: center; }
+details.more > summary::-webkit-details-marker { display: none; }
+details.more > summary::before { content: "+"; font-family: var(--f-data); color: var(--accent-ink); }
+details.more[open] > summary::before { content: "−"; }
+details.more[open] > .more-in { margin-top: 12px; display: flex; flex-direction: column; gap: 12px; }
+.preview {
+  display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap;
+  border-top: 1.5px dashed var(--line); padding-top: 12px;
+}
+.preview .formula { font: 400 13px/1.4 var(--f-data); color: var(--muted); }
+.preview .res { font: 600 30px/1 var(--f-display); font-variant-numeric: tabular-nums; }
+.preview .res.dim { color: var(--muted); font-size: 18px; }
+.err { color: var(--bad); font-size: 13px; }
+.actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.btn {
+  border: 0; border-radius: 8px; padding: 13px 18px; font-weight: 600; font-size: 15px; background: var(--surface-2); color: var(--ink);
+}
+.btn.primary { background: var(--accent); color: #fff; flex: 1; min-width: 160px; }
+.btn.primary:hover { filter: brightness(1.05); }
+.btn.ghost { background: transparent; border: 1.5px solid var(--line); }
+.btn.danger { background: var(--bad-soft); color: var(--bad); }
+.btn.small { padding: 8px 12px; font-size: 13.5px; font-weight: 500; }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+
+/* ---------- Итог вахты ---------- */
+.tbl-wrap { overflow-x: auto; }
+table.sum { width: 100%; border-collapse: collapse; font-size: 14px; }
+table.sum th { font: 500 11.5px/1.2 var(--f-data); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); text-align: right; padding: 0 0 8px 10px; }
+table.sum th:first-child { text-align: left; padding-left: 0; }
+table.sum td { padding: 9px 0 9px 10px; border-top: 1px solid var(--line); text-align: right; white-space: nowrap; font-family: var(--f-data); font-variant-numeric: tabular-nums; }
+table.sum td:first-child { text-align: left; padding-left: 0; font-family: var(--f-body); white-space: normal; color: var(--ink-2); }
+table.sum tr.key td { font-weight: 600; color: var(--ink); }
+table.sum tr.key td:first-child { color: var(--ink); }
+table.sum tr.total td { border-top: 1.5px solid var(--ink); font-weight: 600; color: var(--ink); }
+table.sum .sub { display: block; font-size: 12px; color: var(--muted); }
+.note { font-size: 13px; color: var(--ink-2); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+.linkbtn { border: 0; background: none; padding: 0; color: var(--accent-ink); font-weight: 600; font-size: 13px; text-decoration: underline; text-underline-offset: 3px; }
+
+/* ---------- Графики ---------- */
+.chart { position: relative; min-width: 0; }
+.chart svg { display: block; width: 100%; height: auto; touch-action: pan-y; }
+.chart text { font-family: var(--f-data); font-size: 11px; fill: var(--muted); }
+.chart .lbl-strong { fill: var(--ink); font-weight: 500; font-size: 12px; }
+.chart .lbl-acc { fill: var(--accent-ink); font-weight: 500; }
+.c-grid { stroke: var(--line); stroke-width: 1; }
+.c-grid.dash { stroke-dasharray: 2 3; }
+.c-ref { stroke: var(--ink-2); stroke-width: 1; }
+.c-fact { fill: none; stroke: var(--accent); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.c-fc { fill: none; stroke: var(--accent); stroke-width: 2; stroke-dasharray: 5 4; stroke-linejoin: round; }
+.c-band { fill: var(--band); stroke: none; }
+.c-today { stroke: var(--ink-2); stroke-width: 1; stroke-dasharray: 3 3; }
+.c-dot { fill: var(--accent); stroke: var(--bg); stroke-width: 2; }
+.c-dot-h { fill: var(--bg); stroke: var(--accent); stroke-width: 2; }
+.c-cross { stroke: var(--ink-2); stroke-width: 1; }
+.c-bar { fill: var(--bar); }
+.c-bar.hi { fill: var(--ink); }
+.c-mean { stroke: var(--accent); stroke-width: 1.5; stroke-dasharray: 5 4; }
+.c-hit { fill: transparent; cursor: crosshair; }
+.tip {
+  position: absolute; pointer-events: none; background: var(--ink); color: var(--bg); border-radius: 6px; padding: 7px 9px;
+  font: 12px/1.4 var(--f-data); white-space: nowrap; transform: translate(-50%, -100%); box-shadow: 0 4px 14px rgba(0,0,0,.25); z-index: 3;
+}
+.tip b { font-weight: 500; }
+.chart-empty { padding: 30px 12px; text-align: center; color: var(--muted); border: 1.5px dashed var(--line); border-radius: 10px; font-size: 14px; }
+.legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12.5px; color: var(--ink-2); }
+.legend i { display: inline-block; width: 18px; height: 0; border-top: 2px solid var(--accent); vertical-align: middle; margin-right: 6px; }
+.legend i.dash { border-top-style: dashed; }
+.legend i.band { height: 10px; border: 0; background: var(--band); border-radius: 2px; }
+.legend i.bar { width: 8px; height: 10px; border: 0; background: var(--bar); border-radius: 2px; }
+.fc-line { font-size: 14px; color: var(--ink-2); }
+.fc-line b { color: var(--ink); font-weight: 600; }
+.scenario { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 14px; background: var(--warn-soft); color: var(--ink); border-radius: 8px; padding: 10px 12px; }
+.scenario b { font-family: var(--f-data); font-weight: 500; }
+
+details.params { border-top: 1px solid var(--line); padding-top: 12px; }
+details.params > summary { cursor: pointer; font-weight: 600; font-size: 14px; color: var(--ink-2); }
+details.params[open] > .params-in { margin-top: 14px; display: flex; flex-direction: column; gap: 14px; }
+.days { display: flex; gap: 5px; flex-wrap: wrap; }
+.days button { width: 42px; height: 38px; border-radius: 7px; border: 1.5px solid var(--line); background: var(--bg); font-size: 14px; color: var(--ink-2); }
+.days button[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--bg); font-weight: 600; }
+.seg.wrap-seg { flex-wrap: wrap; }
+.seg.wrap-seg button { flex: 1 1 auto; }
+.seg button small { display: block; font-family: var(--f-data); font-size: 11.5px; font-weight: 400; color: var(--muted); }
+.hint { font-size: 12.5px; color: var(--muted); }
+
+/* ---------- Месяцы ---------- */
+.months { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 330px), 1fr)); gap: 12px; }
+.mo { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.mo-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.mo-name { font: 600 18px/1 var(--f-display); text-transform: uppercase; letter-spacing: 0.04em; }
+.pill { font: 500 11px/1 var(--f-data); letter-spacing: 0.04em; padding: 5px 7px; border-radius: 4px; text-transform: uppercase; white-space: nowrap; }
+.pill.fact { background: var(--surface-2); color: var(--ink-2); }
+.pill.mixed { background: var(--accent-soft); color: var(--accent-ink); }
+.pill.plan { border: 1px dashed var(--muted); color: var(--muted); }
+.pill.warn { background: var(--warn-soft); color: var(--warn); }
+.mo-v { font: 600 28px/1.05 var(--f-display); font-variant-numeric: tabular-nums; }
+.mo-v small { font: 400 13px/1 var(--f-data); color: var(--muted); margin-left: 6px; }
+.mbar { height: 8px; border-radius: 4px; background: var(--surface-2); display: flex; gap: 2px; overflow: hidden; }
+.mbar .f { background: var(--accent); border-radius: 4px; }
+.mbar .p { background: repeating-linear-gradient(-45deg, var(--accent-soft) 0 4px, var(--band) 4px 8px); border-radius: 4px; }
+.kv { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; font-size: 13.5px; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; text-align: right; font-family: var(--f-data); font-variant-numeric: tabular-nums; }
+.foot { font-size: 12.5px; color: var(--muted); }
+
+/* ---------- Журнал ---------- */
+.log { display: flex; flex-direction: column; gap: 8px; }
+.log details { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.log summary { cursor: pointer; padding: 12px 14px; display: flex; justify-content: space-between; gap: 10px; align-items: baseline; list-style: none; }
+.log summary::-webkit-details-marker { display: none; }
+.log summary .mname { font: 600 16px/1 var(--f-display); text-transform: uppercase; letter-spacing: 0.04em; }
+.log summary .mmeta { font: 400 12.5px/1.2 var(--f-data); color: var(--muted); text-align: right; }
+.rows { border-top: 1px solid var(--line); }
+.r {
+  width: 100%; display: grid; grid-template-columns: 54px minmax(0, 1fr) auto; gap: 10px; align-items: center;
+  text-align: left; background: transparent; border: 0; border-bottom: 1px solid var(--line); padding: 10px 14px;
+}
+.r:last-child { border-bottom: 0; }
+.r:hover { background: var(--surface-2); }
+.r.sel { background: var(--accent-soft); }
+.r-date { display: flex; align-items: baseline; gap: 5px; }
+.r-date b { font: 600 20px/1 var(--f-display); font-variant-numeric: tabular-nums; }
+.r-date span { font-size: 12px; color: var(--muted); }
+.r-what { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.r-what .w { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 14px; }
+.r-what .w .p { font-family: var(--f-data); font-weight: 500; }
+.r-what .n { font-size: 12px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.r.off .r-what .w, .r.sick .r-what .w { color: var(--muted); }
+.r-sum { text-align: right; font-family: var(--f-data); font-variant-numeric: tabular-nums; font-size: 14px; white-space: nowrap; }
+.r-sum small { display: block; font-size: 11.5px; color: var(--accent-ink); }
+.empty { padding: 22px 16px; border: 1.5px dashed var(--line); border-radius: 10px; color: var(--ink-2); font-size: 14px; display: flex; flex-direction: column; gap: 6px; }
+.log-tools { display: flex; gap: 8px; flex-wrap: wrap; }
+textarea.csv { width: 100%; height: 120px; font: 12px/1.4 var(--f-data); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 8px; }
+
+/* ---------- Настройки ---------- */
+.set-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.w-text { font-size: 14px; color: var(--ink-2); }
+.status { font-size: 12.5px; color: var(--muted); display: flex; gap: 8px; align-items: center; }
+.status .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); flex: none; }
+.status .dot.ok { background: var(--good); }
+.status .dot.warn { background: var(--warn); }
+
+.toast {
+  position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translate(-50%, 20px);
+  background: var(--ink); color: var(--bg); padding: 11px 16px; border-radius: 8px; font-size: 14px; opacity: 0; pointer-events: none;
+  transition: opacity .2s, transform .2s; max-width: calc(100% - 32px); z-index: 20;
+}
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+@media (prefers-reduced-motion: reduce) { .toast { transition: none; } }
+@media (max-width: 420px) {
+  .wrap { gap: 26px; }
+  .card { padding: 14px; }
+  h1 { font-size: 30px; }
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <header class="label" aria-label="Сводка вахты">
+    <div class="stripe"></div>
+    <div class="label-in">
+      <div class="label-top">
+        <div>
+          <div class="eyebrow" id="h-period">Вахта</div>
+          <h1>Журнал вахты</h1>
+        </div>
+        <div class="tariff-tag" id="h-tariff">Тариф 8 600 ₽ / 100%</div>
+      </div>
+      <div class="hero-nums">
+        <div>
+          <div class="hero-k">Заработано</div>
+          <div class="hero-v" id="h-fact">—</div>
+          <div class="hero-s" id="h-fact-s">Загружаю смены…</div>
+        </div>
+        <div>
+          <div class="hero-k" id="h-end-k">Прогноз к концу вахты</div>
+          <div class="hero-v accent" id="h-end">—</div>
+          <div class="hero-s" id="h-end-s">&nbsp;</div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <section class="card" id="welcome" hidden aria-labelledby="w-title">
+    <h2 id="w-title">Настрой под себя</h2>
+    <p class="w-text">Ставки по умолчанию как в «Логистических решениях»: налог 6%, комиссия 1,5%, фикс ЗамБрига 5&nbsp;000&nbsp;₽. Проверь свой тариф и дату конца вахты. Остальное можно поменять внизу, в разделе «Ставки».</p>
+    <div class="row2">
+      <label class="field" for="w-tariff"><span>Тариф смены (100%), ₽</span><input class="in" id="w-tariff" inputmode="numeric" autocomplete="off"></label>
+      <label class="field" for="w-end"><span>Конец вахты</span><input class="in" type="date" id="w-end"></label>
+    </div>
+    <button class="btn primary" type="button" id="w-ok">Всё верно, начать</button>
+  </section>
+
+  <section class="card" id="entry" aria-labelledby="f-title">
+    <div class="form-head">
+      <h2 id="f-title">Новая смена</h2>
+      <span class="hint" id="f-hint">Вводи смену после выхода</span>
+    </div>
+    <form id="f" novalidate>
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div class="date-row">
+          <label class="field" for="f-date"><span>Дата</span>
+            <input class="in" type="date" id="f-date" required>
+          </label>
+          <div class="wdname" id="f-wd" aria-hidden="true">чт</div>
+        </div>
+        <div class="seg" role="group" aria-label="Тип дня" id="f-kind">
+          <button type="button" data-kind="work" aria-pressed="true">Смена</button>
+          <button type="button" data-kind="off" aria-pressed="false">Выходной</button>
+          <button type="button" data-kind="sick" aria-pressed="false">Больничный</button>
+        </div>
+        <div id="work-fields" style="display:flex;flex-direction:column;gap:12px">
+          <div class="zam-row">
+            <label class="chip" for="f-zam"><input type="checkbox" id="f-zam"> <span id="f-zam-l">ЗамБриг: фикс 5 000 ₽ + выработка</span></label>
+          </div>
+          <label class="field" for="f-pct"><span id="f-pct-l">Выработка за смену</span>
+            <span class="pct-wrap"><input class="in" id="f-pct" inputmode="decimal" autocomplete="off" placeholder="100"></span>
+          </label>
+        </div>
+        <label class="field" for="f-adv"><span>Аванс в этот день, ₽</span>
+          <input class="in" id="f-adv" inputmode="numeric" autocomplete="off" placeholder="0">
+        </label>
+        <details class="more" id="f-more">
+          <summary>Фиксированная оплата, заметка</summary>
+          <div class="more-in">
+            <label class="field" for="f-fixed"><span>Фикс. сумма за смену, ₽ — вместо расчёта от %</span>
+              <input class="in" id="f-fixed" inputmode="numeric" autocomplete="off" placeholder="например, 7600">
+            </label>
+            <label class="field" for="f-note"><span>Заметка</span>
+              <input class="in" id="f-note" autocomplete="off" maxlength="120" placeholder="например, ночная, другой участок">
+            </label>
+          </div>
+        </details>
+        <div class="preview">
+          <div class="formula" id="f-formula">8 600 × 100%</div>
+          <div class="res" id="f-res">8 600 ₽</div>
+        </div>
+        <div class="err" id="f-err" hidden></div>
+        <div class="actions">
+          <button class="btn primary" type="submit" id="f-save">Сохранить смену</button>
+          <button class="btn danger" type="button" id="f-del" hidden>Удалить</button>
+          <button class="btn ghost" type="button" id="f-new" hidden>Новая</button>
+        </div>
+      </div>
+    </form>
+  </section>
+
+  <section class="sec" aria-labelledby="s-sum">
+    <h2 id="s-sum">Итог вахты</h2>
+    <div class="tbl-wrap">
+      <table class="sum">
+        <thead><tr><th></th><th>Сейчас</th><th id="t-end-h">К 30 дек</th></tr></thead>
+        <tbody id="t-body"></tbody>
+      </table>
+    </div>
+    <div class="note" id="t-note"></div>
+  </section>
+
+  <section class="sec" aria-labelledby="s-traj">
+    <h2 id="s-traj">Траектория заработка <span class="h-note">накопительно, ₽</span></h2>
+    <div class="legend" aria-hidden="true"><span><i></i>факт</span><span><i class="dash"></i>прогноз по среднему</span><span><i class="band"></i>±1σ (≈68%)</span></div>
+    <div class="chart" id="c-traj"></div>
+    <p class="fc-line" id="fc-line"></p>
+    <div class="scenario" id="fc-scen" hidden></div>
+    <details class="params" id="params">
+      <summary>Параметры прогноза</summary>
+      <div class="params-in">
+        <div class="field"><span class="flabel">Средний % для прогноза</span>
+          <div class="seg wrap-seg" role="group" aria-label="Средний процент" id="p-basis">
+            <button type="button" data-basis="all" aria-pressed="true">Вся вахта<small id="p-b-all">—</small></button>
+            <button type="button" data-basis="last10" aria-pressed="false">10 последних<small id="p-b-l10">—</small></button>
+            <button type="button" data-basis="manual" aria-pressed="false">Свой<small id="p-b-man">—</small></button>
+          </div>
+        </div>
+        <label class="field" for="p-manual" id="p-manual-f" hidden><span>Свой средний %</span>
+          <input class="in" id="p-manual" inputmode="decimal" autocomplete="off" placeholder="110">
+        </label>
+        <div class="field"><span class="flabel">Рабочие дни по графику</span>
+          <div class="days" id="p-days" role="group" aria-label="Рабочие дни"></div>
+        </div>
+        <div class="row2">
+          <label class="field" for="p-att"><span>Явка, % смен графика</span>
+            <input class="in" id="p-att" inputmode="decimal" autocomplete="off">
+          </label>
+          <label class="field" for="p-end"><span>Конец вахты</span>
+            <input class="in" type="date" id="p-end">
+          </label>
+        </div>
+        <div class="row2">
+          <label class="field" for="p-adv"><span>Плановый аванс, ₽</span>
+            <input class="in" id="p-adv" inputmode="numeric" autocomplete="off">
+          </label>
+          <label class="field" for="p-advday"><span>Каждый</span>
+            <select class="in" id="p-advday">
+              <option value="1">понедельник</option><option value="2">вторник</option><option value="3">среда</option>
+              <option value="4">четверг</option><option value="5">пятница</option><option value="6">суббота</option><option value="0">воскресенье</option>
+            </select>
+          </label>
+        </div>
+        <p class="hint">Прогноз: каждая смена графика × явка × тариф × средний %. Коридор — разброс твоего % от смены к смене; риск пропусков в него не входит, его задаёт явка.</p>
+      </div>
+    </details>
+  </section>
+
+  <section class="sec" aria-labelledby="s-mon">
+    <h2 id="s-mon">По месяцам</h2>
+    <div class="months" id="months"></div>
+    <p class="foot" id="mon-foot"></p>
+  </section>
+
+  <section class="sec" aria-labelledby="s-pct">
+    <h2 id="s-pct">Выработка по сменам <span class="h-note" id="pct-note"></span></h2>
+    <div class="legend" aria-hidden="true"><span><i class="bar"></i>% за смену</span><span><i class="dash"></i>средний %</span></div>
+    <div class="chart" id="c-pct"></div>
+  </section>
+
+  <section class="sec" aria-labelledby="s-log">
+    <h2 id="s-log">Журнал смен <span class="h-note">нажми строку, чтобы исправить</span></h2>
+    <div class="log" id="log"></div>
+    <div class="log-tools">
+      <button class="btn small ghost" type="button" id="csv-btn">Скопировать для Excel</button>
+    </div>
+    <textarea class="csv" id="csv-box" readonly hidden aria-label="Данные для Excel"></textarea>
+    <details class="more" id="imp">
+      <summary>Перенести смены из таблицы</summary>
+      <div class="more-in">
+        <p class="hint">Вставь строки, скопированные кнопкой «Скопировать для Excel» или прямо из Excel, в порядке: дата, день, тип, % выработки, ЗамБриг, фикс, начислено, аванс, заметка. Записи с теми же датами заменятся.</p>
+        <textarea class="csv" id="imp-text" aria-label="Строки для переноса" placeholder="24.10.2026;сб;Смена;1,13;;;9718;15000;"></textarea>
+        <div><button class="btn small" type="button" id="imp-btn">Перенести</button></div>
+      </div>
+    </details>
+  </section>
+
+  <section class="sec" aria-labelledby="s-set">
+    <h2 id="s-set">Ставки</h2>
+    <div class="set-grid">
+      <label class="field" for="s-tariff"><span>Тариф смены (100%), ₽</span><input class="in" id="s-tariff" inputmode="numeric" autocomplete="off"></label>
+      <label class="field" for="s-zam"><span>Фикс ЗамБрига за смену, ₽</span><input class="in" id="s-zam" inputmode="numeric" autocomplete="off"></label>
+      <label class="field" for="s-tax"><span>Налог, %</span><input class="in" id="s-tax" inputmode="decimal" autocomplete="off"></label>
+      <label class="field" for="s-comm"><span>Комиссия, %</span><input class="in" id="s-comm" inputmode="decimal" autocomplete="off"></label>
+    </div>
+    <div class="field"><span class="flabel">Налог и комиссия считаются</span>
+      <div class="seg" role="group" aria-label="База расхода" id="s-mode">
+        <button type="button" data-mode="remainder" aria-pressed="true">С остатка после авансов</button>
+        <button type="button" data-mode="all" aria-pressed="false">Со всей выработки</button>
+      </div>
+    </div>
+    <div class="status" id="status"><span class="dot"></span><span>Подключаю сохранение…</span></div>
+  </section>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+/* ===== Расчёт: чистые функции, без DOM ===== */
+const DAY_MS = 86400000;
+const DEFAULT_CFG = {
+  tariff: 8600,          // тариф смены при 100%
+  tax: 0.06,             // налог
+  comm: 0.015,           // комиссия
+  zamFixed: 5000,        // фикс за смену ЗамБригом, выработка идёт сверху
+  taxMode: "remainder",  // "remainder" — с остатка после авансов (как в таблице); "all" — со всей выработки
+  endDate: "2026-12-30", // конец вахты
+  workDays: [1, 2, 3, 4, 5, 6], // 0=вс … 6=сб
+  attendance: 1,         // доля смен графика, на которые выходишь
+  basis: "all",          // "all" | "last10" | "manual"
+  manualPct: 1,
+  advAmount: 7500,       // плановый аванс
+  advDay: 6              // в какой день недели
+};
+
+function dnum(s) { const [y, m, d] = s.split("-").map(Number); return Date.UTC(y, m - 1, d) / DAY_MS; }
+function dstr(n) {
+  const t = new Date(n * DAY_MS);
+  return t.getUTCFullYear() + "-" + String(t.getUTCMonth() + 1).padStart(2, "0") + "-" + String(t.getUTCDate()).padStart(2, "0");
+}
+function weekday(n) { return ((n + 4) % 7 + 7) % 7; } // 1970-01-01 — четверг
+function mkey(n) { return dstr(n).slice(0, 7); }
+
+function hasFixed(r) { return r.fixed !== null && r.fixed !== undefined && r.fixed !== ""; }
+function isWork(r) { return r.kind === "work"; }
+function isPending(r) { return isWork(r) && !hasFixed(r) && !r.zam && (r.pct === null || r.pct === undefined); }
+function isPctShift(r) { return isWork(r) && !hasFixed(r) && r.pct != null && !r.zam; }
+
+function shiftAmount(r, cfg) {
+  if (!isWork(r)) return 0;
+  if (hasFixed(r)) return Number(r.fixed) || 0;
+  if (r.zam) return cfg.zamFixed + (r.pct != null ? cfg.tariff * r.pct : 0);
+  if (r.pct == null) return 0;
+  return cfg.tariff * r.pct;
+}
+
+function stats(xs) {
+  const n = xs.length;
+  if (!n) return { n: 0, mean: null, sd: 0 };
+  const mean = xs.reduce((a, b) => a + b, 0) / n;
+  const sd = n > 1 ? Math.sqrt(xs.reduce((a, x) => a + (x - mean) ** 2, 0) / (n - 1)) : 0;
+  return { n, mean, sd };
+}
+
+/** Итог вахты: остаток после авансов минус налог и комиссия. */
+function payout(V, A, cfg) {
+  const r = cfg.tax + cfg.comm;
+  const R = V - A;
+  const E = cfg.taxMode === "all" ? V * r : R * r;
+  const net = R - E;
+  return { V, A, R, E, net, total: A + net, rate: r };
+}
+
+/**
+ * records: [{date, kind, pct, zam, fixed, adv, note}]
+ * today: "YYYY-MM-DD"
+ */
+function compute(records, cfgIn, today) {
+  const cfg = Object.assign({}, DEFAULT_CFG, cfgIn || {});
+  const recs = records.slice().sort((a, b) => (a.date < b.date ? -1 : 1));
+  const todayN = dnum(today);
+
+  // --- факт
+  let factV = 0, factA = 0, factShifts = 0;
+  const daily = new Map(); // dayN -> {v, a}
+  for (const r of recs) {
+    const v = shiftAmount(r, cfg), a = Number(r.adv) || 0;
+    factV += v; factA += a;
+    if (isWork(r)) factShifts++;
+    daily.set(dnum(r.date), { v, a, r });
+  }
+  const pctAll = recs.filter(isPctShift);
+  const stAll = stats(pctAll.map(r => r.pct));
+  const basisRecs = cfg.basis === "last10" ? pctAll.slice(-10) : pctAll;
+  const stBasis = stats(basisRecs.map(r => r.pct));
+  const p = cfg.basis === "manual" || !stBasis.n ? cfg.manualPct : stBasis.mean;
+  const sdP = cfg.basis === "manual" ? stAll.sd : stBasis.sd;
+  const perShift = cfg.tariff * p;
+  const sdShift = cfg.tariff * sdP;
+  const pending = recs.filter(isPending);
+
+  // --- фактическая явка относительно графика
+  const workRecs = recs.filter(isWork);
+  const lastN = recs.length ? dnum(recs[recs.length - 1].date) : null;
+  let histAtt = null, schedDays = 0;
+  if (workRecs.length && cfg.workDays.length) {
+    const f = dnum(workRecs[0].date);
+    for (let d = f; d <= lastN; d++) if (cfg.workDays.includes(weekday(d))) schedDays++;
+    histAtt = schedDays ? workRecs.length / schedDays : null;
+  }
+
+  // --- прогноз
+  const startN = Math.max(lastN != null ? lastN + 1 : todayN, todayN);
+  const endN = dnum(cfg.endDate);
+  const fc = new Map(); // dayN -> {v, a, s, var}
+  let fcV = 0, fcA = 0, fcS = 0, fcVar = 0;
+  const addFc = (d, v, a, s, vr) => {
+    const o = fc.get(d) || { v: 0, a: 0, s: 0, vr: 0 };
+    o.v += v; o.a += a; o.s += s; o.vr += vr; fc.set(d, o);
+    fcV += v; fcA += a; fcS += s; fcVar += vr;
+  };
+  // смены без % — в прогноз по среднему, в первый день прогноза
+  if (pending.length && startN <= endN) addFc(startN, pending.length * perShift, 0, pending.length, pending.length * sdShift ** 2);
+  for (let d = startN; d <= endN; d++) {
+    const wk = weekday(d);
+    const att = cfg.attendance;
+    if (cfg.workDays.includes(wk)) addFc(d, att * perShift, 0, att, att * sdShift ** 2);
+    if (cfg.advAmount > 0 && wk === cfg.advDay) addFc(d, 0, cfg.advAmount, 0, 0);
+  }
+
+  // --- помесячно
+  const firstN = recs.length ? dnum(recs[0].date) : startN;
+  const months = new Map();
+  const mo = k => {
+    if (!months.has(k)) months.set(k, { key: k, fV: 0, fA: 0, fS: 0, pcts: [], pV: 0, pA: 0, pS: 0, pVar: 0 });
+    return months.get(k);
+  };
+  for (let d = firstN; d <= Math.max(endN, lastN ?? endN); d++) mo(mkey(d));
+  for (const r of recs) {
+    const m = mo(r.date.slice(0, 7));
+    m.fV += shiftAmount(r, cfg); m.fA += Number(r.adv) || 0;
+    if (isWork(r)) m.fS++;
+    if (isPctShift(r)) m.pcts.push(r.pct);
+  }
+  for (const [d, o] of fc) {
+    const m = mo(mkey(d));
+    m.pV += o.v; m.pA += o.a; m.pS += o.s; m.pVar += o.vr;
+  }
+  const monthList = [...months.values()].sort((a, b) => (a.key < b.key ? -1 : 1)).map(m => {
+    const st = stats(m.pcts);
+    return Object.assign(m, {
+      avgPct: st.mean, V: m.fV + m.pV, A: m.fA + m.pA, sd: Math.sqrt(m.pVar),
+      state: m.pS === 0 && m.pV === 0 ? "fact" : (m.fS === 0 && m.fV === 0 && m.fA === 0 ? "plan" : "mixed")
+    });
+  });
+
+  // --- траектория для графика (накопительно)
+  const series = [];
+  let cum = 0, cumVar = 0;
+  const lastFactN = lastN ?? startN - 1;
+  for (let d = firstN; d <= Math.max(endN, lastFactN); d++) {
+    const f = daily.get(d), q = fc.get(d);
+    if (f) cum += f.v;
+    if (q) { cum += q.v; cumVar += q.vr; }
+    series.push({ d, cum, sd: Math.sqrt(cumVar), fact: d <= lastFactN, dayV: (f ? f.v : 0) + (q ? q.v : 0), rec: f ? f.r : null });
+  }
+
+  return {
+    cfg, recs, today: todayN,
+    fact: { V: factV, A: factA, shifts: factShifts, pctN: stAll.n, pctMean: stAll.mean, pctSd: stAll.sd },
+    basis: { p, sdP, n: stBasis.n, perShift, sdShift },
+    pending: pending.length,
+    histAtt, schedDays,
+    fc: { V: fcV, A: fcA, shifts: fcS, sd: Math.sqrt(fcVar), startN, endN },
+    end: { V: factV + fcV, A: factA + fcA },
+    months: monthList, series, firstN, lastN
+  };
+}
+
+if (typeof module !== "undefined") module.exports = { DEFAULT_CFG, dnum, dstr, weekday, compute, payout, shiftAmount, stats, isPending, isPctShift };
+
+</script>
+<script>
+(function () {
+  "use strict";
+  const $ = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+  const WD = ["вс", "пн", "вт", "ср", "чт", "пт", "сб"];
+  const MON_GEN = ["янв", "фев", "мар", "апр", "мая", "июн", "июл", "авг", "сен", "окт", "ноя", "дек"];
+  const MON_AX = ["янв", "фев", "мар", "апр", "май", "июн", "июл", "авг", "сен", "окт", "ноя", "дек"];
+  const MON_NOM = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
+  const NF = new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 0 });
+  const num = v => NF.format(Math.round(v));
+  const rub = v => num(v) + " ₽";
+  const pc = (p, d) => {
+    if (p == null || !isFinite(p)) return "—";
+    if (d == null) d = Math.abs(p * 100 - Math.round(p * 100)) < 1e-6 ? 0 : 1;
+    return (p * 100).toLocaleString("ru-RU", { minimumFractionDigits: d, maximumFractionDigits: d }) + "%";
+  };
+  const kfmt = v => v >= 1e6 ? (v / 1e6).toLocaleString("ru-RU", { maximumFractionDigits: 2 }) + " млн" : Math.round(v / 1000) + "к";
+  const plural = (n, a, b, c) => { n = Math.abs(Math.round(n)); const m10 = n % 10, m100 = n % 100; if (m10 === 1 && m100 !== 11) return a; if (m10 >= 2 && m10 <= 4 && (m100 < 10 || m100 >= 20)) return b; return c; };
+  const smen = n => plural(n, "смена", "смены", "смен");
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  function todayStr() { const t = new Date(); return t.getFullYear() + "-" + String(t.getMonth() + 1).padStart(2, "0") + "-" + String(t.getDate()).padStart(2, "0"); }
+  function parts(n) { const s = dstr(n); return { y: +s.slice(0, 4), m: +s.slice(5, 7), d: +s.slice(8, 10) }; }
+  const dLabel = n => { const p = parts(n); return WD[weekday(n)] + ", " + p.d + " " + MON_GEN[p.m - 1]; };
+  const dShort = n => { const p = parts(n); return p.d + " " + MON_GEN[p.m - 1]; };
+  const reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  function parsePct(s) {
+    s = String(s || "").replace(/[\s%]/g, "").replace(",", ".");
+    if (!s) return null;
+    const n = parseFloat(s);
+    if (!isFinite(n)) return NaN;
+    const p = n <= 5 ? n : n / 100;
+    return p < 0 || p > 5 ? NaN : Math.round(p * 10000) / 10000;
+  }
+  function parseMoney(s) {
+    s = String(s || "").replace(/[\s  ₽]/g, "").replace(",", ".");
+    if (!s) return null;
+    const n = parseFloat(s);
+    return isFinite(n) ? n : NaN;
+  }
+
+  /* ---------------- Состояние и хранение (Telegram CloudStorage) ---------------- */
+  const S = {
+    mode: "loading", loaded: false, readOnly: false, loadError: false, firstRun: false,
+    recs: new Map(), cfg: Object.assign({}, DEFAULT_CFG),
+    kind: "work", editing: null, formTouched: false, formInit: false,
+    openMonths: new Set(), openInit: false, R: null
+  };
+  const TG = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
+  const IN_TG = !!(TG && TG.initData);
+  const tgAtLeast = v => !!(TG && typeof TG.isVersionAtLeast === "function" && TG.isVersionAtLeast(v));
+  const CS = IN_TG && TG.CloudStorage && tgAtLeast("6.9") ? TG.CloudStorage : null;
+  const LS_KEY = "vahta-helper-v1";
+  const KIND_C = { work: "w", off: "o", sick: "s" }, KIND_D = { w: "work", o: "off", s: "sick" };
+  const cs = {
+    getKeys: () => new Promise((ok, no) => CS.getKeys((e, v) => (e ? no(e) : ok(v || [])))),
+    getItems: keys => new Promise((ok, no) => CS.getItems(keys, (e, v) => (e ? no(e) : ok(v || {})))),
+    setItem: (k, v) => new Promise((ok, no) => CS.setItem(k, v, (e, r) => (e ? no(e) : ok(r)))),
+    removeItem: k => new Promise((ok, no) => CS.removeItem(k, (e, r) => (e ? no(e) : ok(r))))
+  };
+  // один ключ на месяц: m2026_10 → [[день, тип, %, ЗамБриг, фикс, аванс, заметка], …]
+  const monthKeyOf = date => "m" + date.slice(0, 4) + "_" + date.slice(5, 7);
+  function encodeMonth(recs, noteMax) {
+    return JSON.stringify(recs.map(r => [
+      +r.date.slice(8, 10), KIND_C[r.kind] || "w", r.pct == null ? null : r.pct, r.zam ? 1 : 0,
+      hasFixed(r) ? Number(r.fixed) : null, Number(r.adv) || 0, (r.note || "").slice(0, noteMax)
+    ]));
+  }
+  function decodeMonth(key, raw) {
+    if (!raw) return [];
+    const y = key.slice(1, 5), m = key.slice(6, 8);
+    try {
+      return JSON.parse(raw).map(a => ({
+        date: y + "-" + m + "-" + String(a[0]).padStart(2, "0"), kind: KIND_D[a[1]] || "work",
+        pct: a[2] == null ? null : a[2], zam: !!a[3], fixed: a[4] == null ? null : a[4], adv: a[5] || 0, note: a[6] || ""
+      }));
+    } catch (e) { return []; }
+  }
+  function lsLoad() {
+    try {
+      const raw = localStorage.getItem(LS_KEY);
+      if (!raw) { S.firstRun = true; return; }
+      const o = JSON.parse(raw);
+      S.recs = new Map((o.recs || []).map(r => [r.date, r]));
+      S.cfg = Object.assign({}, DEFAULT_CFG, o.cfg || {});
+      S.firstRun = !o.cfg;
+    } catch (e) { S.firstRun = true; }
+  }
+  function lsSave() {
+    try { localStorage.setItem(LS_KEY, JSON.stringify({ recs: Array.from(S.recs.values()), cfg: S.cfg })); } catch (e) { /* ignore */ }
+  }
+
+  const chains = new Map();
+  function enqueue(key, fn) {
+    const prev = chains.get(key) || Promise.resolve();
+    const next = prev.catch(() => {}).then(fn);
+    chains.set(key, next);
+    return next;
+  }
+  function haptic(t) { try { if (TG && TG.HapticFeedback && tgAtLeast("6.1")) TG.HapticFeedback.notificationOccurred(t); } catch (e) { /* ignore */ } }
+  function writeFail() {
+    haptic("error");
+    toast("Не сохранилось в Telegram. Проверь интернет и сохрани ещё раз.");
+  }
+  async function saveMonth(key) {
+    if (S.mode !== "tg") { lsSave(); return; }
+    const prefix = key.slice(1, 5) + "-" + key.slice(6, 8);
+    try {
+      await enqueue(key, () => {
+        const recs = Array.from(S.recs.values()).filter(r => r.date.slice(0, 7) === prefix).sort((a, b) => (a.date < b.date ? -1 : 1));
+        if (!recs.length) return cs.removeItem(key);
+        let v = encodeMonth(recs, 120);
+        if (v.length > 4096) v = encodeMonth(recs, 20);
+        if (v.length > 4096) v = encodeMonth(recs, 0);
+        return cs.setItem(key, v);
+      });
+    } catch (e) { writeFail(e); }
+  }
+  async function saveRec(rec) {
+    S.recs.set(rec.date, rec);
+    render();
+    await saveMonth(monthKeyOf(rec.date));
+  }
+  async function deleteRec(date) {
+    S.recs.delete(date);
+    render();
+    await saveMonth(monthKeyOf(date));
+  }
+  let cfgTimer = null;
+  function saveCfgNow() {
+    clearTimeout(cfgTimer);
+    if (S.mode === "tg") { const v = JSON.stringify(S.cfg); enqueue("cfg", () => cs.setItem("cfg", v)).catch(writeFail); }
+    else lsSave();
+  }
+  function setCfg(patch) {
+    S.cfg = Object.assign({}, S.cfg, patch);
+    render();
+    clearTimeout(cfgTimer);
+    if (!S.readOnly) cfgTimer = setTimeout(saveCfgNow, 700);
+  }
+
+  function initTG() {
+    if (!TG) return;
+    try {
+      TG.ready();
+      TG.expand();
+      if (tgAtLeast("7.7") && TG.disableVerticalSwipes) TG.disableVerticalSwipes();
+      if (!IN_TG) return;
+      const applyTheme = () => {
+        const dark = TG.colorScheme === "dark";
+        document.documentElement.setAttribute("data-theme", dark ? "dark" : "light");
+        if (tgAtLeast("6.9")) { const bg = dark ? "#111418" : "#E7EAED"; TG.setHeaderColor(bg); TG.setBackgroundColor(bg); }
+      };
+      applyTheme();
+      TG.onEvent("themeChanged", applyTheme);
+    } catch (e) { /* старый клиент Telegram */ }
+  }
+
+  async function boot() {
+    initTG();
+    bindForm(); bindSettings(); bindLog(); bindWelcome(); bindImport();
+    fillForm(todayStr());
+    render();
+    if (CS) {
+      S.mode = "tg";
+      try {
+        const keys = await cs.getKeys();
+        const mk = keys.filter(k => /^m\d{4}_\d{2}$/.test(k));
+        const want = keys.includes("cfg") ? mk.concat("cfg") : mk;
+        const vals = {};
+        for (let i = 0; i < want.length; i += 20) Object.assign(vals, await cs.getItems(want.slice(i, i + 20)));
+        const recs = new Map();
+        mk.forEach(k => decodeMonth(k, vals[k]).forEach(r => recs.set(r.date, r)));
+        S.recs = recs;
+        if (vals.cfg) {
+          try { S.cfg = Object.assign({}, DEFAULT_CFG, JSON.parse(vals.cfg)); } catch (e) { S.firstRun = true; }
+        } else S.firstRun = true;
+      } catch (e) { S.loadError = true; S.readOnly = true; }
+    } else { S.mode = "local"; lsLoad(); }
+    if (S.firstRun) S.cfg.endDate = dstr(dnum(todayStr()) + 61);
+    S.loaded = true;
+    render();
+  }
+
+  function bindWelcome() {
+    $("#w-ok").addEventListener("click", () => {
+      const t = parseMoney($("#w-tariff").value), e = $("#w-end").value;
+      const patch = {};
+      if (t && t > 0) patch.tariff = t;
+      if (/^\d{4}-\d{2}-\d{2}$/.test(e)) patch.endDate = e;
+      S.firstRun = false;
+      S.cfg = Object.assign({}, S.cfg, patch);
+      if (!S.readOnly) saveCfgNow();
+      render();
+      haptic("success");
+      toast("Готово. Вноси смену после выхода.");
+    });
+  }
+
+  function bindImport() {
+    $("#imp-btn").addEventListener("click", async () => {
+      if (S.readOnly) { toast("Смены не загрузились, поэтому сохранение выключено. Перезапусти приложение."); return; }
+      const got = [];
+      $("#imp-text").value.split(/\r?\n/).forEach(ln => {
+        const f = ln.split(/;|\t/).map(x => x.trim());
+        const m = /^(\d{1,2})\.(\d{1,2})\.(\d{4})$/.exec(f[0] || "");
+        if (!m) return;
+        const date = m[3] + "-" + m[2].padStart(2, "0") + "-" + m[1].padStart(2, "0");
+        const t = (f[2] || "").toLowerCase();
+        const kind = t.startsWith("вых") ? "off" : t.startsWith("бол") ? "sick" : "work";
+        const pct = parsePct(f[3]), fixed = parseMoney(f[5]), adv = parseMoney(f[7]);
+        got.push({
+          date, kind,
+          pct: kind === "work" && pct != null && !Number.isNaN(pct) ? pct : null,
+          zam: kind === "work" && /^(да|1|true)$/i.test(f[4] || ""),
+          fixed: kind === "work" && fixed != null && !Number.isNaN(fixed) ? fixed : null,
+          adv: adv && !Number.isNaN(adv) ? adv : 0,
+          note: (f[8] || "").slice(0, 120)
+        });
+      });
+      if (!got.length) { toast("Не нашёл строк с датой вида 24.10.2026."); return; }
+      const months = new Set();
+      got.forEach(r => { S.recs.set(r.date, r); months.add(monthKeyOf(r.date)); });
+      render();
+      for (const k of months) await saveMonth(k);
+      $("#imp-text").value = "";
+      $("#imp").open = false;
+      haptic("success");
+      toast("Перенесено " + got.length + " " + plural(got.length, "запись", "записи", "записей"));
+    });
+  }
+
+  /* ---------------- Отрисовка ---------------- */
+  function render() {
+    const R = compute(Array.from(S.recs.values()), S.cfg, todayStr());
+    S.R = R;
+    if (S.loaded && !S.formInit) { S.formInit = true; if (!S.formTouched) fillForm(defaultDate()); }
+    const wel = $("#welcome");
+    wel.hidden = !(S.loaded && S.firstRun);
+    if (!wel.hidden) { setVal("w-tariff", String(S.cfg.tariff)); setVal("w-end", S.cfg.endDate); }
+    drawHero(R); drawSummary(R); drawForecast(R); drawTraj(R); drawMonths(R); drawPct(R); drawLog(R); syncSettings(R); drawStatus(); updatePreview();
+    $("#f-zam-l").textContent = "ЗамБриг: фикс " + num(R.cfg.zamFixed) + " ₽ + выработка";
+  }
+
+  function drawHero(R) {
+    const c = R.cfg;
+    $("#h-tariff").textContent = "Тариф " + num(c.tariff) + " ₽ = 100%";
+    const firstWork = R.recs.find(r => r.kind === "work");
+    $("#h-period").textContent = "Вахта · " + (firstWork ? "с " + dShort(dnum(firstWork.date)) + " " : "") + "по " + dShort(dnum(c.endDate));
+    $("#h-end-k").textContent = "Прогноз к " + dShort(dnum(c.endDate));
+    if (!S.loaded) return;
+    $("#h-fact").textContent = rub(R.fact.V);
+    let s = R.fact.shifts + " " + smen(R.fact.shifts);
+    if (R.fact.pctMean != null) s += " · ср. " + pc(R.fact.pctMean, 1);
+    if (R.pending) s += " · " + R.pending + " " + smen(R.pending) + " без %";
+    $("#h-fact-s").textContent = R.recs.length ? s : "Смен пока нет";
+    const end = payout(R.end.V, R.end.A, c);
+    $("#h-end").textContent = rub(R.end.V);
+    $("#h-end-s").textContent = (R.fc.sd > 0 ? "± " + num(R.fc.sd) + " · " : "") + "на руки ≈ " + rub(end.total);
+  }
+
+  function drawSummary(R) {
+    const c = R.cfg, now = payout(R.fact.V, R.fact.A, c), end = payout(R.end.V, R.end.A, c);
+    $("#t-end-h").textContent = "К " + dShort(dnum(c.endDate));
+    const rateTxt = "налог " + pc(c.tax) + " + комиссия " + pc(c.comm);
+    const rows = [
+      ["Выручка вахты", now.V, end.V, "", R.fc.sd > 0 ? "± " + num(R.fc.sd) : ""],
+      ["Сумма аванса", now.A, end.A, "", R.fc.A ? "план +" + num(R.fc.A) : ""],
+      ["Остаток выручки", now.R, end.R, "", ""],
+      ["Сумма расхода<span class=\"sub\">" + rateTxt + "</span>", now.E, end.E, "", ""],
+      ["Без налогов", now.net, end.net, "key", ""],
+      ["Итого на руки<span class=\"sub\">аванс + без налогов</span>", now.total, end.total, "total", ""]
+    ];
+    $("#t-body").innerHTML = rows.map(r =>
+      `<tr class="${r[3]}"><td>${r[0]}</td><td>${S.loaded ? num(r[1]) : "—"}</td><td>${S.loaded ? num(r[2]) : "—"}${r[4] && S.loaded ? `<span class="sub">${r[4]}</span>` : ""}</td></tr>`
+    ).join("");
+    const rate = c.tax + c.comm;
+    const note = $("#t-note");
+    if (c.taxMode === "all") {
+      note.innerHTML = `<span>Расход считается со всей выработки, включая авансы.</span><button type="button" class="linkbtn" data-setmode="remainder">Считать как в таблице</button>`;
+    } else {
+      note.innerHTML = `<span>Налог и комиссия считаются с остатка после авансов. Если ${pc(rate, 1)} удерживают и с авансов, на руки выйдет меньше: сейчас на ${rub(now.A * rate)}, к концу вахты на ${rub(end.A * rate)}.</span><button type="button" class="linkbtn" data-setmode="all">Считать со всей выработки</button>`;
+    }
+  }
+
+  function drawForecast(R) {
+    const c = R.cfg, f = R.fc;
+    const line = $("#fc-line");
+    if (f.startN > f.endN) { line.innerHTML = "Конец вахты уже прошёл. Поменяй дату в параметрах прогноза, чтобы посчитать дальше."; $("#fc-scen").hidden = true; return; }
+    const pend = R.pending ? `, включая ${R.pending} ${smen(R.pending)} без %` : "";
+    line.innerHTML = `Осталось ≈ <b>${Math.round(f.shifts)} ${smen(f.shifts)}</b>${pend} по <b>${rub(R.basis.perShift)}</b> (${pc(R.basis.p, 1)}), с ${dShort(f.startN)} по ${dShort(f.endN)}: <b>+${rub(f.V)}</b>.`;
+    // сценарий по фактической явке
+    const sc = $("#fc-scen");
+    let alt = null;
+    if (R.histAtt != null && Math.abs(R.histAtt - c.attendance) > 0.02) alt = Math.round(R.histAtt * 100) / 100;
+    else if (c.attendance < 0.995) alt = 1;
+    if (alt == null) { sc.hidden = true; return; }
+    const A = compute(R.recs, Object.assign({}, c, { attendance: alt }), todayStr());
+    const why = alt === 1 ? "При полной явке" : `Если выходить как с начала вахты (${pc(alt)} смен графика)`;
+    sc.innerHTML = `<span>${why}, к ${dShort(f.endN)} будет ≈ <b>${rub(A.end.V)}</b></span><button type="button" class="btn small ghost" data-att="${alt}">Взять ${pc(alt)}</button>`;
+    sc.hidden = false;
+  }
+
+  function niceStep(raw) {
+    if (raw <= 0) return 1;
+    const e = Math.pow(10, Math.floor(Math.log10(raw))), f = raw / e;
+    return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10) * e;
+  }
+  const r1 = v => Math.round(v * 10) / 10;
+
+  function drawTraj(R) {
+    const box = $("#c-traj");
+    const ser = R.series;
+    if (!S.loaded) { box.innerHTML = '<div class="chart-empty">Загружаю смены…</div>'; return; }
+    if (!ser.length) { box.innerHTML = '<div class="chart-empty">График появится после первой смены.</div>'; return; }
+    const W = Math.max(300, Math.round(box.clientWidth || 340)), H = W < 520 ? 230 : 270;
+    const m = { l: 44, r: 14, t: 24, b: 26 };
+    const x0 = ser[0].d, x1 = ser[ser.length - 1].d, pw = W - m.l - m.r, ph = H - m.t - m.b;
+    const X = d => r1(m.l + (x1 === x0 ? 0 : (d - x0) / (x1 - x0)) * pw);
+    const maxV = Math.max(1, ...ser.map(s => s.cum + s.sd));
+    const step = niceStep(maxV / 4), top = Math.ceil(maxV / step) * step;
+    const Y = v => r1(m.t + (1 - v / top) * ph);
+    let g = "";
+    for (let v = 0; v <= top + 1e-6; v += step) {
+      g += `<line class="c-grid${v ? " dash" : ""}" x1="${m.l}" x2="${W - m.r}" y1="${Y(v)}" y2="${Y(v)}"/>`;
+      g += `<text x="${m.l - 6}" y="${Y(v) + 4}" text-anchor="end">${v ? kfmt(v) : "0"}</text>`;
+    }
+    // месяцы
+    const segs = [];
+    for (let d = x0; d <= x1; d++) {
+      const p = parts(d);
+      if (d === x0 || p.d === 1) segs.push({ s: d, m: p.m });
+      if (segs.length) segs[segs.length - 1].e = d;
+    }
+    segs.forEach((sg, i) => {
+      if (i > 0) g += `<line class="c-grid" x1="${X(sg.s)}" x2="${X(sg.s)}" y1="${m.t}" y2="${H - m.b}"/>`;
+      const cx = (X(sg.s) + X(sg.e)) / 2;
+      if (X(sg.e) - X(sg.s) > 22) g += `<text x="${r1(cx)}" y="${H - 8}" text-anchor="middle">${MON_AX[sg.m - 1]}</text>`;
+    });
+    // сегодня
+    if (R.today >= x0 && R.today <= x1) {
+      const tx = X(R.today);
+      g += `<line class="c-today" x1="${tx}" x2="${tx}" y1="${m.t - 4}" y2="${H - m.b}"/>`;
+      g += `<text x="${Math.min(W - m.r - 24, Math.max(m.l + 24, tx))}" y="${m.t - 9}" text-anchor="middle">сегодня</text>`;
+    }
+    let lf = -1;
+    ser.forEach((s, i) => { if (s.fact) lf = i; });
+    const factPts = ser.slice(0, lf + 1).map(s => X(s.d) + "," + Y(s.cum));
+    const fcSer = ser.slice(Math.max(lf, 0));
+    if (fcSer.length > 1) {
+      const up = fcSer.map(s => X(s.d) + "," + Y(s.cum + s.sd));
+      const lo = fcSer.slice().reverse().map(s => X(s.d) + "," + Y(Math.max(0, s.cum - s.sd)));
+      g += `<path class="c-band" d="M${up.join("L")}L${lo.join("L")}Z"/>`;
+      g += `<path class="c-fc" d="M${fcSer.map(s => X(s.d) + "," + Y(s.cum)).join("L")}"/>`;
+    }
+    if (factPts.length > 1) g += `<path class="c-fact" d="M${factPts.join("L")}"/>`;
+    if (lf >= 0) {
+      const s = ser[lf];
+      g += `<circle class="c-dot" cx="${X(s.d)}" cy="${Y(s.cum)}" r="4.5"/>`;
+      const lx = X(s.d) - 8;
+      g += `<text class="lbl-strong" x="${lx}" y="${Y(s.cum) - 10}" text-anchor="end">${num(s.cum)}</text>`;
+    }
+    if (fcSer.length > 1) {
+      const e = ser[ser.length - 1];
+      g += `<circle class="c-dot-h" cx="${X(e.d)}" cy="${Y(e.cum)}" r="4"/>`;
+      const ey = Y(e.cum + e.sd) - 8;
+      g += `<text class="lbl-strong" x="${W - m.r}" y="${Math.max(m.t + 10, ey)}" text-anchor="end">≈ ${num(e.cum)}</text>`;
+    }
+    g += `<line class="c-cross" id="tj-x" x1="0" x2="0" y1="${m.t}" y2="${H - m.b}" visibility="hidden"/>`;
+    g += `<circle class="c-dot-h" id="tj-d" r="4" cx="0" cy="0" visibility="hidden"/>`;
+    g += `<rect class="c-hit" x="${m.l}" y="0" width="${pw}" height="${H}"/>`;
+    box.innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Накопленная выработка: факт ${num(R.fact.V)} ₽, прогноз к концу вахты ${num(R.end.V)} ₽">${g}</svg><div class="tip" hidden></div>`;
+    const svg = box.querySelector("svg"), tip = box.querySelector(".tip"), cx = $("#tj-x", svg), dot = $("#tj-d", svg);
+    const move = ev => {
+      const rect = svg.getBoundingClientRect();
+      const px = (ev.clientX - rect.left) * (W / rect.width);
+      const i = Math.max(0, Math.min(ser.length - 1, Math.round((px - m.l) / pw * (x1 - x0))));
+      const s = ser[i];
+      const x = X(s.d), y = Y(s.cum);
+      cx.setAttribute("x1", x); cx.setAttribute("x2", x); cx.setAttribute("visibility", "visible");
+      dot.setAttribute("cx", x); dot.setAttribute("cy", y); dot.setAttribute("visibility", "visible");
+      let h = `<b>${dLabel(s.d)}</b>${s.fact ? "" : " · прогноз"}<br>накоплено ${rub(s.cum)}`;
+      if (!s.fact && s.sd > 0) h += ` ± ${num(s.sd)}`;
+      if (s.rec) {
+        const r = s.rec;
+        if (r.kind === "work") h += `<br>смена ${rub(shiftAmount(r, R.cfg))}${r.pct != null && !hasFixed(r) ? " · " + pc(r.pct) : ""}${r.zam ? " · ЗамБриг" : ""}`;
+        else h += `<br>${r.kind === "sick" ? "больничный" : "выходной"}`;
+        if (r.adv) h += ` · аванс ${num(r.adv)}`;
+      } else if (s.dayV > 0) h += `<br>за день ≈ ${rub(s.dayV)}`;
+      tip.innerHTML = h; tip.hidden = false;
+      const sc = rect.width / W;
+      const half = Math.min(tip.offsetWidth / 2 + 4, rect.width / 2);
+      tip.style.left = Math.max(half, Math.min(rect.width - half, x * sc)) + "px";
+      tip.style.top = Math.max(tip.offsetHeight + 2, y * sc - 12) + "px";
+    };
+    const leave = () => { tip.hidden = true; cx.setAttribute("visibility", "hidden"); dot.setAttribute("visibility", "hidden"); };
+    svg.addEventListener("pointermove", move);
+    svg.addEventListener("pointerdown", move);
+    svg.addEventListener("pointerleave", leave);
+  }
+
+  function drawPct(R) {
+    const box = $("#c-pct");
+    const data = R.recs.filter(isPctShift);
+    if (!S.loaded) { box.innerHTML = ""; return; }
+    if (!data.length) { box.innerHTML = '<div class="chart-empty">Столбики появятся, когда внесёшь смену с процентом выработки.</div>'; $("#pct-note").textContent = ""; return; }
+    $("#pct-note").textContent = `${data.length} ${smen(data.length)} · ср. ${pc(R.fact.pctMean, 1)} · разброс ±${pc(R.fact.pctSd, 0)}`;
+    const W = Math.max(300, Math.round(box.clientWidth || 340)), H = 170;
+    const m = { l: 40, r: 10, t: 14, b: 24 }, pw = W - m.l - m.r, ph = H - m.t - m.b;
+    const maxP = Math.max(1.5, ...data.map(r => r.pct)), top = Math.ceil(maxP * 2 - 1e-9) / 2;
+    const Y = v => r1(m.t + (1 - v / top) * ph);
+    let g = "";
+    for (let v = 0; v <= top + 1e-9; v += 0.5) {
+      g += `<line class="${v === 1 ? "c-ref" : "c-grid" + (v ? " dash" : "")}" x1="${m.l}" x2="${W - m.r}" y1="${Y(v)}" y2="${Y(v)}"/>`;
+      g += `<text x="${m.l - 6}" y="${Y(v) + 4}" text-anchor="end">${Math.round(v * 100)}%</text>`;
+    }
+    const n = data.length, slot = pw / n, gap = slot > 7 ? 2 : 1, bw = Math.max(1, slot - gap);
+    let lastM = null;
+    data.forEach((r, i) => {
+      const x = r1(m.l + i * slot + gap / 2), y = Y(r.pct), h = r1(Y(0) - y);
+      g += `<rect class="c-bar" x="${x}" y="${y}" width="${r1(bw)}" height="${Math.max(1, h)}" rx="${Math.min(2, bw / 2)}"/>`;
+      const mm = r.date.slice(5, 7);
+      if (mm !== lastM) { lastM = mm; g += `<text x="${x}" y="${H - 7}">${MON_AX[+mm - 1]}</text>`; }
+    });
+    const my = Y(R.fact.pctMean);
+    g += `<line class="c-mean" x1="${m.l}" x2="${W - m.r}" y1="${my}" y2="${my}"/>`;
+    g += `<text class="lbl-acc" x="${W - m.r}" y="${my - 6}" text-anchor="end">ср. ${pc(R.fact.pctMean, 1)}</text>`;
+    g += `<rect class="c-hit" x="${m.l}" y="0" width="${pw}" height="${H}"/>`;
+    box.innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Процент выработки по сменам, средний ${pc(R.fact.pctMean, 1)}">${g}</svg><div class="tip" hidden></div>`;
+    const svg = box.querySelector("svg"), tip = box.querySelector(".tip");
+    let hi = null;
+    const move = ev => {
+      const rect = svg.getBoundingClientRect();
+      const px = (ev.clientX - rect.left) * (W / rect.width);
+      const i = Math.max(0, Math.min(n - 1, Math.floor((px - m.l) / slot)));
+      const r = data[i];
+      const bars = svg.querySelectorAll(".c-bar");
+      if (hi) hi.classList.remove("hi");
+      hi = bars[i]; hi.classList.add("hi");
+      tip.innerHTML = `<b>${dLabel(dnum(r.date))}</b><br>${pc(r.pct)} · ${rub(shiftAmount(r, R.cfg))}`;
+      tip.hidden = false;
+      const sc = rect.width / W, half = tip.offsetWidth / 2 + 4;
+      tip.style.left = Math.max(half, Math.min(rect.width - half, (m.l + (i + 0.5) * slot) * sc)) + "px";
+      tip.style.top = Math.max(tip.offsetHeight + 2, Y(r.pct) * sc - 8) + "px";
+    };
+    svg.addEventListener("pointermove", move);
+    svg.addEventListener("pointerdown", move);
+    svg.addEventListener("pointerleave", () => { tip.hidden = true; if (hi) hi.classList.remove("hi"); });
+  }
+
+  function monthTitle(key, withYear) {
+    const [y, mm] = key.split("-").map(Number);
+    return MON_NOM[mm - 1] + (withYear ? " " + y : "");
+  }
+
+  function drawMonths(R) {
+    const el = $("#months");
+    if (!S.loaded) { el.innerHTML = ""; return; }
+    const c = R.cfg, rate = c.tax + c.comm;
+    const years = new Set(R.months.map(m => m.key.slice(0, 4)));
+    const mx = Math.max(1, ...R.months.map(m => m.V));
+    el.innerHTML = R.months.map(m => {
+      const st = m.state;
+      const pill = st === "fact" ? '<span class="pill fact">факт</span>' : st === "mixed" ? '<span class="pill mixed">идёт</span>' : '<span class="pill plan">прогноз</span>';
+      const fw = (m.fV / mx * 100).toFixed(1), pw = (m.pV / mx * 100).toFixed(1);
+      const shifts = st === "fact" ? String(m.fS) : st === "plan" ? "≈ " + Math.round(m.pS) : m.fS + " + ≈" + Math.round(m.pS);
+      const avg = m.avgPct != null ? pc(m.avgPct, 1) + (st === "mixed" ? " (факт)" : "") : (m.pS ? "≈ " + pc(R.basis.p, 1) : "—");
+      const split = st === "mixed" ? `<div class="foot">факт ${num(m.fV)} + прогноз ${num(m.pV)}</div>` : "";
+      const sd = m.sd > 0 ? `<small>± ${num(m.sd)}</small>` : "";
+      const adv = num(m.A) + (m.pA ? (m.fA ? ` <span class="muted">(${num(m.pA)} план)</span>` : ' <span class="muted">план</span>') : "");
+      return `<article class="mo">
+        <div class="mo-top"><h3 class="mo-name">${monthTitle(m.key, years.size > 1)}</h3>${pill}</div>
+        <div class="mo-v">${rub(m.V)}${sd}</div>
+        <div class="mbar" aria-hidden="true">${m.fV > 0 ? `<span class="f" style="width:${fw}%"></span>` : ""}${m.pV > 0 ? `<span class="p" style="width:${pw}%"></span>` : ""}</div>
+        ${split}
+        <dl class="kv">
+          <dt>Смен</dt><dd>${shifts}</dd>
+          <dt>Средний %</dt><dd>${avg}</dd>
+          <dt>Чистыми, −${pc(rate, 1)}</dt><dd>${num(m.V * (1 - rate))}</dd>
+          <dt>Авансы</dt><dd>${adv}</dd>
+        </dl>
+      </article>`;
+    }).join("");
+    $("#mon-foot").textContent = `Чистыми = выработка минус ${pc(rate, 1)} (${pc(c.tax)} налог и ${pc(c.comm)} комиссия). Прогнозная часть считается по среднему %, графику и явке из параметров прогноза.`;
+  }
+
+  function rowHtml(r, c) {
+    const n = dnum(r.date), p = parts(n);
+    let what;
+    if (r.kind === "work") {
+      if (hasFixed(r)) what = "<span>Смена, фикс.</span>";
+      else if (r.pct == null && !r.zam) what = '<span>Смена</span><span class="pill warn">нужен %</span>';
+      else if (r.zam) what = `<span class="pill fact">ЗамБриг</span>${r.pct != null ? `<span class="p">+ ${pc(r.pct)}</span>` : '<span class="muted">фикс</span>'}`;
+      else what = `<span class="p">${pc(r.pct)}</span>`;
+    } else what = r.kind === "sick" ? "Больничный" : "Выходной";
+    const amt = r.kind === "work" ? rub(shiftAmount(r, c)) : '<span class="muted">—</span>';
+    const adv = r.adv ? `<small>аванс ${num(r.adv)}</small>` : "";
+    return `<button type="button" class="r ${r.kind}${S.editing === r.date ? " sel" : ""}" data-date="${r.date}">
+      <span class="r-date"><b>${p.d}</b><span>${WD[weekday(n)]}</span></span>
+      <span class="r-what"><span class="w">${what}</span>${r.note ? `<span class="n">${esc(r.note)}</span>` : ""}</span>
+      <span class="r-sum">${amt}${adv}</span></button>`;
+  }
+
+  function drawLog(R) {
+    const el = $("#log");
+    if (!S.loaded) { el.innerHTML = '<div class="empty">Загружаю смены…</div>'; return; }
+    if (!R.recs.length) {
+      el.innerHTML = '<div class="empty"><b>Смен пока нет.</b><span>Внеси первую смену в форме выше: дата, % выработки и аванс, если давали. Итог, прогноз и месяцы посчитаются сами.</span></div>';
+      return;
+    }
+    const groups = new Map();
+    R.recs.slice().reverse().forEach(r => { const k = r.date.slice(0, 7); if (!groups.has(k)) groups.set(k, []); groups.get(k).push(r); });
+    const years = new Set(Array.from(groups.keys()).map(k => k.slice(0, 4)));
+    if (!S.openInit) { S.openInit = true; S.openMonths.add(groups.keys().next().value); }
+    let h = "";
+    for (const [k, rs] of groups) {
+      const w = rs.filter(r => r.kind === "work");
+      const sum = rs.reduce((a, r) => a + shiftAmount(r, R.cfg), 0);
+      h += `<details data-m="${k}"${S.openMonths.has(k) ? " open" : ""}><summary><span class="mname">${monthTitle(k, years.size > 1)}</span><span class="mmeta">${w.length} ${smen(w.length)} · ${rub(sum)}</span></summary><div class="rows">${rs.map(r => rowHtml(r, R.cfg)).join("")}</div></details>`;
+    }
+    el.innerHTML = h;
+  }
+
+  function setVal(id, v) { const el = document.getElementById(id); if (el && el !== document.activeElement && el.value !== String(v)) el.value = v; }
+  const pctIn = p => String(Math.round(p * 10000) / 100).replace(".", ",");
+
+  function syncSettings(R) {
+    const c = R.cfg;
+    $$("#p-basis button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.basis === c.basis)));
+    const pcts = R.recs.filter(isPctShift).map(r => r.pct);
+    const l10 = stats(pcts.slice(-10));
+    $("#p-b-all").textContent = R.fact.pctN ? pc(R.fact.pctMean, 1) : "нет данных";
+    $("#p-b-l10").textContent = l10.n ? pc(l10.mean, 1) : "нет данных";
+    $("#p-b-man").textContent = pc(c.manualPct, 1);
+    $("#p-manual-f").hidden = c.basis !== "manual";
+    setVal("p-manual", pctIn(c.manualPct));
+    const order = [1, 2, 3, 4, 5, 6, 0];
+    const days = $("#p-days");
+    if (!days.children.length) days.innerHTML = order.map(d => `<button type="button" data-day="${d}" aria-pressed="false">${WD[d]}</button>`).join("");
+    $$("button", days).forEach(b => b.setAttribute("aria-pressed", String(c.workDays.includes(+b.dataset.day))));
+    setVal("p-att", pctIn(c.attendance));
+    setVal("p-end", c.endDate);
+    setVal("p-adv", c.advAmount ? String(c.advAmount) : "0");
+    setVal("p-advday", String(c.advDay));
+    setVal("s-tariff", String(c.tariff));
+    setVal("s-zam", String(c.zamFixed));
+    setVal("s-tax", pctIn(c.tax));
+    setVal("s-comm", pctIn(c.comm));
+    $$("#s-mode button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.mode === c.taxMode)));
+  }
+
+  function drawStatus() {
+    const el = $("#status");
+    let cls = "", txt = "Загружаю смены…";
+    if (S.mode === "tg") {
+      if (S.loadError) { cls = "warn"; txt = "Не удалось загрузить смены из Telegram. Закрой приложение и открой снова."; }
+      else if (S.loaded) { cls = "ok"; txt = "Смены хранятся в твоём аккаунте Telegram и видны на всех устройствах, где ты вошёл."; }
+    } else if (S.mode === "local") { cls = "warn"; txt = "Открыто не через бота: смены хранятся только в этом браузере. Чтобы они были в Telegram, открой приложение через бота."; }
+    el.innerHTML = `<span class="dot ${cls}"></span><span>${txt}</span>`;
+  }
+
+  /* ---------------- Форма ---------------- */
+  function defaultDate() {
+    const t = todayStr();
+    if (!S.recs.has(t)) return t;
+    const last = Array.from(S.recs.keys()).sort().pop();
+    return dstr(Math.max(dnum(last), dnum(t)) + 1);
+  }
+  function setKind(k) {
+    S.kind = k;
+    $$("#f-kind button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.kind === k)));
+    $("#work-fields").hidden = k !== "work";
+  }
+  function fillForm(date) {
+    $("#f-date").value = date;
+    const r = S.recs.get(date);
+    S.editing = r ? date : null;
+    setKind(r ? r.kind : "work");
+    $("#f-pct").value = r && r.pct != null ? pctIn(r.pct) : "";
+    $("#f-zam").checked = !!(r && r.zam);
+    zamUi();
+    $("#f-fixed").value = r && hasFixed(r) ? String(r.fixed) : "";
+    $("#f-adv").value = r && r.adv ? String(r.adv) : "";
+    $("#f-note").value = r ? r.note || "" : "";
+    $("#f-more").open = !!(r && (hasFixed(r) || r.note));
+    resetDel(); showErr("");
+    $$("#f .in").forEach(i => i.classList.remove("bad"));
+    updateFormMeta(); updatePreview();
+    $$(".r.sel").forEach(b => b.classList.remove("sel"));
+    if (S.editing) { const b = document.querySelector(`.r[data-date="${date}"]`); if (b) b.classList.add("sel"); }
+  }
+  function updateFormMeta() {
+    const v = $("#f-date").value;
+    const n = v ? dnum(v) : null;
+    $("#f-wd").textContent = n != null ? WD[weekday(n)] : "";
+    const ed = !!S.editing;
+    $("#f-title").innerHTML = ed ? 'Правка <span class="tag">' + dShort(n) + "</span>" : "Новая смена";
+    $("#f-hint").textContent = ed ? "Запись уже есть, правишь её" : "Сегодня " + dLabel(dnum(todayStr()));
+    $("#f-save").textContent = ed ? "Сохранить изменения" : "Сохранить смену";
+    $("#f-del").hidden = !ed;
+    $("#f-new").hidden = !ed;
+  }
+  function readForm() {
+    const kind = S.kind, work = kind === "work";
+    return {
+      date: $("#f-date").value,
+      kind,
+      pct: work ? parsePct($("#f-pct").value) : null,
+      zam: work && $("#f-zam").checked,
+      fixed: work ? parseMoney($("#f-fixed").value) : null,
+      adv: parseMoney($("#f-adv").value),
+      note: $("#f-note").value.trim().slice(0, 120)
+    };
+  }
+  function updatePreview() {
+    const c = S.cfg, r = readForm(), fEl = $("#f-formula"), rEl = $("#f-res");
+    $("#f-pct").classList.toggle("bad", Number.isNaN(r.pct));
+    $("#f-fixed").classList.toggle("bad", Number.isNaN(r.fixed));
+    $("#f-adv").classList.toggle("bad", Number.isNaN(r.adv));
+    const advTxt = r.adv > 0 ? " · аванс " + num(r.adv) : "";
+    rEl.classList.remove("dim");
+    if (r.kind !== "work") {
+      fEl.textContent = (r.kind === "sick" ? "Больничный" : "Выходной") + advTxt;
+      rEl.textContent = "без смены"; rEl.classList.add("dim"); return;
+    }
+    if (Number.isNaN(r.pct) || Number.isNaN(r.fixed)) { fEl.textContent = "проверь число"; rEl.textContent = "—"; rEl.classList.add("dim"); return; }
+    if (r.fixed != null) { fEl.textContent = "фикс. оплата" + advTxt; rEl.textContent = rub(r.fixed); return; }
+    if (r.zam) {
+      fEl.textContent = "фикс " + num(c.zamFixed) + (r.pct != null ? " + " + num(c.tariff) + " × " + pc(r.pct) : "") + advTxt;
+      rEl.textContent = rub(shiftAmount(Object.assign({}, r, { adv: 0 }), c)); return;
+    }
+    if (r.pct == null) { fEl.textContent = (S.editing ? "% не внесён: пока 0 ₽, в прогнозе по среднему" : "введи % выработки") + advTxt; rEl.textContent = "—"; rEl.classList.add("dim"); return; }
+    fEl.textContent = num(c.tariff) + " × " + pc(r.pct) + advTxt;
+    rEl.textContent = rub(shiftAmount(Object.assign({}, r, { adv: 0 }), c));
+  }
+  function zamUi() {
+    const z = $("#f-zam").checked;
+    $("#f-pct-l").textContent = z ? "Выработка сверх фикса, % (если была)" : "Выработка за смену";
+    $("#f-pct").placeholder = z ? "0" : "100";
+  }
+  function showErr(t) { const e = $("#f-err"); e.textContent = t; e.hidden = !t; }
+  let delArmed = null;
+  function resetDel() { clearTimeout(delArmed); delArmed = null; const b = $("#f-del"); b.textContent = "Удалить"; }
+
+  function bindForm() {
+    $("#f-kind").addEventListener("click", e => { const b = e.target.closest("button[data-kind]"); if (!b) return; setKind(b.dataset.kind); updatePreview(); });
+    ["f-pct", "f-adv", "f-fixed", "f-note"].forEach(id => $("#" + id).addEventListener("input", () => { showErr(""); updatePreview(); }));
+    $("#f-zam").addEventListener("change", () => { zamUi(); updatePreview(); });
+    $("#f-date").addEventListener("change", () => { S.formTouched = true; const v = $("#f-date").value; if (v) fillForm(v); else updateFormMeta(); });
+    $("#f").addEventListener("submit", async e => {
+      e.preventDefault();
+      const r = readForm();
+      if (!r.date) return showErr("Выбери дату.");
+      if (Number.isNaN(r.pct)) return showErr("Не понял процент. Напиши число, например 113 или 1,13.");
+      if (Number.isNaN(r.fixed) || Number.isNaN(r.adv)) return showErr("Сумма должна быть числом, например 7500.");
+      if (S.readOnly) return showErr("Смены не загрузились из Telegram, поэтому сохранение выключено. Закрой приложение и открой снова.");
+      const rec = { date: r.date, kind: r.kind, pct: r.pct, zam: !!r.zam, fixed: r.fixed, adv: r.adv || 0, note: r.note };
+      const wasEdit = S.recs.has(r.date);
+      S.formTouched = true;
+      const n = dnum(r.date);
+      const amt = rec.kind === "work" ? " — " + rub(shiftAmount(rec, S.cfg)) : "";
+      saveRec(rec);
+      toast((wasEdit ? "Обновлено: " : "Сохранено: ") + dLabel(n) + amt);
+      fillForm(wasEdit ? r.date : dstr(n + 1));
+    });
+    $("#f-del").addEventListener("click", () => {
+      const b = $("#f-del");
+      if (!delArmed) { b.textContent = "Точно удалить?"; delArmed = setTimeout(resetDel, 4000); return; }
+      const d = S.editing; resetDel();
+      if (!d) return;
+      deleteRec(d);
+      toast("Удалено: " + dLabel(dnum(d)));
+      fillForm(d);
+    });
+    $("#f-new").addEventListener("click", () => fillForm(defaultDate()));
+  }
+
+  function bindLog() {
+    $("#log").addEventListener("click", e => {
+      const b = e.target.closest(".r[data-date]");
+      if (!b) return;
+      S.formTouched = true;
+      fillForm(b.dataset.date);
+      $("#entry").scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
+    });
+    $("#log").addEventListener("toggle", e => {
+      const d = e.target;
+      if (!d.dataset || !d.dataset.m) return;
+      if (d.open) S.openMonths.add(d.dataset.m); else S.openMonths.delete(d.dataset.m);
+    }, true);
+    $("#csv-btn").addEventListener("click", () => {
+      const R = S.R; if (!R) return;
+      const fmtN = v => String(Math.round(v * 10000) / 10000).replace(".", ",");
+      const kindRu = { work: "Смена", off: "Выходной", sick: "Больничный" };
+      const lines = ["Дата;День;Тип;% выработки;ЗамБриг;Фикс. сумма;Начислено;Аванс;Заметка"];
+      R.recs.forEach(r => {
+        const p = parts(dnum(r.date));
+        lines.push([
+          String(p.d).padStart(2, "0") + "." + String(p.m).padStart(2, "0") + "." + p.y,
+          WD[weekday(dnum(r.date))], kindRu[r.kind] || r.kind,
+          r.pct != null ? fmtN(r.pct) : "", r.zam ? "да" : "", hasFixed(r) ? r.fixed : "",
+          Math.round(shiftAmount(r, R.cfg)), r.adv || "", (r.note || "").replace(/;/g, ",")
+        ].join(";"));
+      });
+      const text = lines.join("\n");
+      const box = $("#csv-box");
+      const fallback = () => { box.value = text; box.hidden = false; box.focus(); box.select(); toast("Выдели текст в поле ниже и скопируй."); };
+      try {
+        navigator.clipboard.writeText(text).then(() => { box.hidden = true; toast(`Скопировано ${R.recs.length} строк. Вставь в Excel.`); }, fallback);
+      } catch (e) { fallback(); }
+    });
+  }
+
+  function bindSettings() {
+    $("#p-basis").addEventListener("click", e => { const b = e.target.closest("button[data-basis]"); if (b) setCfg({ basis: b.dataset.basis }); });
+    $("#p-days").addEventListener("click", e => {
+      const b = e.target.closest("button[data-day]"); if (!b) return;
+      const d = +b.dataset.day, set = new Set(S.cfg.workDays);
+      if (set.has(d)) set.delete(d); else set.add(d);
+      setCfg({ workDays: Array.from(set).sort() });
+    });
+    $("#s-mode").addEventListener("click", e => { const b = e.target.closest("button[data-mode]"); if (b) setCfg({ taxMode: b.dataset.mode }); });
+    $("#t-note").addEventListener("click", e => { const b = e.target.closest("[data-setmode]"); if (b) setCfg({ taxMode: b.dataset.setmode }); });
+    $("#fc-scen").addEventListener("click", e => { const b = e.target.closest("[data-att]"); if (b) { setCfg({ attendance: +b.dataset.att }); toast("Явка в прогнозе: " + pc(+b.dataset.att)); } });
+    const bindNum = (id, parse, key, ok) => $("#" + id).addEventListener("input", e => {
+      const v = parse(e.target.value);
+      const good = v != null && !Number.isNaN(v) && (!ok || ok(v));
+      e.target.classList.toggle("bad", !good && e.target.value.trim() !== "");
+      if (good) setCfg({ [key]: v });
+    });
+    const frac = s => { const n = parseMoney(s); return n == null || Number.isNaN(n) ? n : n / 100; };
+    const att = s => { const n = parseMoney(s); if (n == null || Number.isNaN(n)) return n; return n > 1.5 ? n / 100 : n; };
+    bindNum("p-manual", parsePct, "manualPct", v => v > 0);
+    bindNum("p-att", att, "attendance", v => v >= 0 && v <= 1.5);
+    bindNum("p-adv", parseMoney, "advAmount", v => v >= 0);
+    bindNum("s-tariff", parseMoney, "tariff", v => v > 0);
+    bindNum("s-zam", parseMoney, "zamFixed", v => v >= 0);
+    bindNum("s-tax", frac, "tax", v => v >= 0 && v < 1);
+    bindNum("s-comm", frac, "comm", v => v >= 0 && v < 1);
+    $("#p-end").addEventListener("change", e => { if (/^\d{4}-\d{2}-\d{2}$/.test(e.target.value)) setCfg({ endDate: e.target.value }); });
+    $("#p-advday").addEventListener("change", e => setCfg({ advDay: +e.target.value }));
+  }
+
+  let toastT = null;
+  function toast(t) {
+    const el = $("#toast");
+    el.textContent = t; el.classList.add("show");
+    clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove("show"), 2600);
+  }
+
+  let lastW = 0;
+  const onResize = () => {
+    const w = $("#c-traj").clientWidth;
+    if (Math.abs(w - lastW) > 4 && S.R) { lastW = w; drawTraj(S.R); drawPct(S.R); }
+  };
+  if (window.ResizeObserver) new ResizeObserver(onResize).observe(document.querySelector(".wrap"));
+  else window.addEventListener("resize", onResize);
+
+  boot();
+})();
+
+</script>
+</body>
+</html>
