@@ -3,241 +3,339 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="format-detection" content="telephone=no">
 <title>Вахтовый помощник</title>
 <script src="https://telegram.org/js/telegram-web-app.js?64"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Oswald:wght@500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;800&family=Onest:wght@400;500;600;700&display=swap" media="print" onload="this.media='all'">
 <style>
-/* Журнал вахты: одна колонка до 780px, пять разделов в нижнем меню. Шапка как складская этикетка с полосой разметки пола. */
+/* Семейство ботов, микс «Табло» + «Пиксель». Вахта: оранжевый акцент — деньги и главные действия; сиреневый — только игра.
+   Одна колонка до 560px, нижнее меню из пяти разделов, на экране одна главная цифра шрифтом Unbounded. */
 :root {
-  --bg: #E7EAED; --surface: #F8F9FA; --surface-2: #DFE3E7; --ink: #14181D; --ink-2: #434C57; --muted: #69727D; --line: #CDD3D9;
-  --accent: #E2560B; --accent-ink: #A9400A; --accent-soft: #F6D8C4; --band: rgba(226, 86, 11, 0.16); --bar: #8D97A3; --stripe: #14181D;
-  --good: #2C7449; --good-soft: #D5EBDD; --warn: #8F5B0E; --warn-soft: #F4E4C3; --bad: #B3362B; --bad-soft: #F5D9D5;
-  --shadow: 0 1px 0 rgba(20, 24, 29, 0.06), 0 6px 18px -10px rgba(20, 24, 29, 0.28);
-  --f-display: "Oswald", "Arial Narrow", "Roboto Condensed", sans-serif;
-  --f-body: "Golos Text", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --f-data: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-  --tabbar-h: 64px;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg: #111418; --surface: #1A1E23; --surface-2: #252B32; --ink: #E9ECEF; --ink-2: #BAC2CB; --muted: #8E98A4; --line: #2F363E;
-    --accent: #FF7A33; --accent-ink: #FF9B63; --accent-soft: #4A2A18; --band: rgba(255, 122, 51, 0.2); --bar: #6E7884; --stripe: #0A0C0E;
-    --good: #5DBB84; --good-soft: #1C3426; --warn: #E2AE55; --warn-soft: #3D3018; --bad: #F07468; --bad-soft: #43221F;
-    --shadow: 0 1px 0 rgba(0, 0, 0, 0.3), 0 8px 22px -12px rgba(0, 0, 0, 0.7);
-    color-scheme: dark;
-  }
-}
-:root[data-theme="dark"] {
-  --bg: #111418; --surface: #1A1E23; --surface-2: #252B32; --ink: #E9ECEF; --ink-2: #BAC2CB; --muted: #8E98A4; --line: #2F363E;
-  --accent: #FF7A33; --accent-ink: #FF9B63; --accent-soft: #4A2A18; --band: rgba(255, 122, 51, 0.2); --bar: #6E7884; --stripe: #0A0C0E;
-  --good: #5DBB84; --good-soft: #1C3426; --warn: #E2AE55; --warn-soft: #3D3018; --bad: #F07468; --bad-soft: #43221F;
-  --shadow: 0 1px 0 rgba(0, 0, 0, 0.3), 0 8px 22px -12px rgba(0, 0, 0, 0.7);
+  --bg: #0B0B0D; --card: #17171A; --card2: #222227; --line: #2E2E34; --text: #FFFFFF; --muted: #A1A1AA;
+  --accent: #FF6A1A; --acc-deep: #B8470D; --acc-ink: #0B0B0D; --acc-soft: rgba(255, 106, 26, 0.16); --band: rgba(255, 106, 26, 0.18);
+  --game: #B79CFF; --game-soft: rgba(183, 156, 255, 0.16);
+  --good: #5DD39E; --warn: #F7D154; --bad: #F28B82; --bar: #5A5A63;
+  --fu: "Unbounded", "Arial Black", system-ui, sans-serif;
+  --fo: "Onest", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --tabbar-h: 66px;
   color-scheme: dark;
 }
-
-* { box-sizing: border-box; }
-html { padding-top: env(safe-area-inset-top, 0px); }
+body[data-style="balanced"] {
+  --accent: #F2945E; --acc-deep: #A9613A; --acc-soft: rgba(242, 148, 94, 0.15); --band: rgba(242, 148, 94, 0.16);
+  --game: #A99BDB; --game-soft: rgba(169, 155, 219, 0.15); --good: #8CCFA0; --warn: #E2B86E; --bad: #E5867A;
+}
+body[data-style="classic"] {
+  --bg: #0C0C0E; --card: #18181B; --card2: #232327;
+  --accent: #D9A47A; --acc-deep: #9B7150; --acc-soft: rgba(217, 164, 122, 0.14); --band: rgba(217, 164, 122, 0.15);
+  --game: #AFA8CF; --game-soft: rgba(175, 168, 207, 0.14); --good: #9CC5A6; --warn: #C9A46A; --bad: #D07A6E;
+  --fu: var(--fo);
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html { padding-top: env(safe-area-inset-top, 0px); background: var(--bg); }
 [hidden] { display: none !important; }
 img { max-width: 100%; }
 body {
-  margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 var(--f-body);
+  margin: 0; background: var(--bg); color: var(--text); font: 15px/1.45 var(--fo);
   padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
   -webkit-text-size-adjust: 100%;
 }
-.wrap { max-width: 780px; margin: 0 auto; padding-block: 16px calc(var(--tabbar-h) + 34px + env(safe-area-inset-bottom, 0px)); }
-.view { display: flex; flex-direction: column; gap: 26px; }
+.wrap { max-width: 560px; margin: 0 auto; padding-block: 14px calc(var(--tabbar-h) + 30px + env(safe-area-inset-bottom, 0px)); }
+.view { display: flex; flex-direction: column; gap: 18px; }
 h1, h2, h3 { margin: 0; text-wrap: balance; }
-h2 { font: 600 15px/1.2 var(--f-display); letter-spacing: 0.09em; text-transform: uppercase; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
-h2 .h-note { font: 400 13px/1.3 var(--f-body); letter-spacing: 0; text-transform: none; color: var(--muted); }
-.view-title { font: 600 26px/1.05 var(--f-display); letter-spacing: 0.02em; text-transform: uppercase; }
-.view-head { display: flex; flex-direction: column; gap: 4px; }
-.view-head p { color: var(--muted); font-size: 13.5px; }
 p { margin: 0; }
-.muted { color: var(--muted); }
-.sec { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
 button, input, select, textarea { font: inherit; color: inherit; }
 button { cursor: pointer; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.num { font-variant-numeric: tabular-nums; }
+.muted { color: var(--muted); }
+.pxi, .lni { display: block; flex: none; }
 
-/* ---------- Шапка-этикетка ---------- */
-.label { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; overflow: hidden; box-shadow: var(--shadow); }
-.stripe { height: 10px; background: repeating-linear-gradient(-45deg, var(--accent) 0 9px, var(--stripe) 9px 18px); }
-.label-in { padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 14px; }
-.label-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
-.eyebrow { font: 500 12px/1.3 var(--f-data); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
-h1 { font: 600 30px/1 var(--f-display); letter-spacing: 0.01em; text-transform: uppercase; margin-top: 6px; }
-.tariff-tag { font: 500 12px/1 var(--f-data); border: 1.5px solid var(--ink); border-radius: 3px; padding: 7px 9px; white-space: nowrap; align-self: flex-start; }
-.hero-nums { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 20px; border-top: 1.5px dashed var(--line); padding-top: 12px; }
-.hero-k { font-size: 12.5px; color: var(--muted); }
-.hero-v { font: 600 clamp(24px, 7vw, 34px)/1.08 var(--f-display); font-variant-numeric: tabular-nums; margin-top: 2px; white-space: nowrap; }
-.hero-v.accent { color: var(--accent-ink); }
-.hero-s { font-size: 12.5px; color: var(--ink-2); margin-top: 3px; }
-@media (max-width: 370px) { .hero-nums { grid-template-columns: 1fr; } }
+/* ---------- шапка раздела ---------- */
+.hdr { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 34px; }
+.brand { font: 800 18px/1 var(--fu); letter-spacing: 0.02em; text-transform: uppercase; white-space: nowrap; }
+.brand span { color: var(--muted); font-weight: 500; }
+.gchips { display: flex; gap: 6px; }
+.gchip { display: inline-flex; align-items: center; gap: 5px; padding: 7px 10px; border: 0; border-radius: 10px; background: var(--game-soft); color: var(--game); font: 700 11px/1 var(--fu); letter-spacing: 0.02em; white-space: nowrap; }
+.gchip .pxi, .gchip .lni { width: 13px; height: 13px; }
 
-/* ---------- Карточки и поля ---------- */
-.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; box-shadow: var(--shadow); padding: 16px; display: flex; flex-direction: column; gap: 14px; }
-.form-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; }
-.form-head h2 .tag { font: 500 11px/1 var(--f-data); letter-spacing: 0.04em; padding: 4px 6px; border-radius: 3px; background: var(--accent-soft); color: var(--accent-ink); }
+/* ---------- истории ---------- */
+.stories { display: flex; gap: 10px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+.stories::-webkit-scrollbar { display: none; }
+.story { flex: none; width: 66px; display: flex; flex-direction: column; align-items: center; gap: 6px; background: none; border: 0; padding: 0; color: var(--text); font-size: 11px; line-height: 1.2; text-align: center; }
+.story .ring { width: 60px; height: 60px; border-radius: 20px; padding: 2.5px; background: var(--accent); }
+.story.seen .ring { background: var(--line); }
+.story .in { width: 100%; height: 100%; border-radius: 17.5px; background: var(--card); border: 2.5px solid var(--bg); display: grid; place-items: center; color: var(--accent); }
+.story.seen .in { color: var(--muted); }
+.story.new .in { color: var(--game); }
+
+/* ---------- главная цифра ---------- */
+.hero { display: flex; flex-direction: column; gap: 6px; padding-top: 2px; }
+.eyebrow { font-size: 11px; font-weight: 600; letter-spacing: 0.16em; color: var(--muted); text-transform: uppercase; }
+.big { font: 800 clamp(52px, 17vw, 72px)/1 var(--fu); letter-spacing: -0.04em; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.big small { font-size: 0.44em; color: var(--muted); letter-spacing: 0; font-weight: 700; margin-left: 2px; }
+.big.money { font-size: clamp(34px, 10.6vw, 54px); letter-spacing: -0.035em; }
+body[data-style="classic"] .big { font-weight: 700; letter-spacing: -0.02em; }
+.hsub { font-size: 14px; font-weight: 600; color: var(--accent); }
+.hsub.muted { color: var(--muted); font-weight: 500; }
+.hsub.bad { color: var(--bad); }
+.hsub.good { color: var(--good); }
+
+/* ---------- карточки ---------- */
+.card { background: var(--card); border-radius: 20px; padding: 16px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.card-h { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.card-t { font: 700 13px/1.25 var(--fu); letter-spacing: 0.04em; text-transform: uppercase; }
+.card-t.game { color: var(--game); font-size: 11px; letter-spacing: 0.1em; }
+.card-t.acc { color: var(--accent); font-size: 11px; letter-spacing: 0.1em; }
+.card .note-s { font-size: 13px; color: var(--muted); }
+.sec { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.sec-t { font: 700 13px/1.2 var(--fu); letter-spacing: 0.06em; text-transform: uppercase; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.sec-t .h-note { font: 400 13px/1.3 var(--fo); letter-spacing: 0; text-transform: none; color: var(--muted); }
+.k { font-size: 10.5px; letter-spacing: 0.12em; color: var(--muted); text-transform: uppercase; }
+.stats3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; padding: 0 2px; }
+.stats3 > div { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.sv { font: 700 clamp(15px, 4.6vw, 20px)/1.1 var(--fu); white-space: nowrap; font-variant-numeric: tabular-nums; overflow: hidden; text-overflow: ellipsis; }
+.sv.game { color: var(--game); }
+
+/* дорожка к цели */
+.track { position: relative; height: 26px; }
+.track .tb { position: absolute; left: 0; right: 0; top: 0; height: 14px; background: var(--line); }
+.track .tf { position: absolute; left: 0; top: 0; height: 14px; background: repeating-linear-gradient(-45deg, rgba(0, 0, 0, 0.24) 0 8px, transparent 8px 16px), var(--accent); max-width: 100%; }
+.track .tick { position: absolute; top: 18px; width: 2px; height: 6px; background: var(--line); }
+.track .tflag { position: absolute; right: -2px; top: -14px; color: var(--accent); }
+body[data-style="classic"] .track .tb, body[data-style="classic"] .track .tf { border-radius: 7px; background-image: none; }
+body[data-style="classic"] .track .tf { background: var(--accent); }
+.trk-l { display: flex; justify-content: space-between; align-items: baseline; font-size: 11px; color: var(--muted); letter-spacing: 0.1em; }
+.trk-l b { font: 700 12px/1 var(--fu); color: var(--accent); letter-spacing: 0; }
+
+/* клетки прогресса (игра) */
+.cells { display: flex; gap: 4px; }
+.cells i { flex: 1; height: 10px; background: var(--line); }
+.cells i.on { background: var(--game); }
+.cells.acc i.on { background: var(--accent); }
+.cells.tall i { height: 14px; }
+body[data-style="classic"] .cells { gap: 0; border-radius: 6px; overflow: hidden; background: var(--line); }
+body[data-style="classic"] .cells i { background: transparent; height: 8px; }
+body[data-style="classic"] .cells i.on { background: var(--game); }
+body[data-style="classic"] .cells.acc i.on { background: var(--accent); }
+
+/* ---------- кнопки ---------- */
+.btn { height: 56px; border: 0; border-radius: 16px; padding: 0 18px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; font: 700 14px/1 var(--fu); letter-spacing: 0.04em; text-transform: uppercase; background: var(--card2); color: var(--text); }
+.btn.pri { background: var(--accent); color: var(--acc-ink); }
+.btn.out { background: transparent; box-shadow: inset 0 0 0 2px var(--text); }
+.btn.danger { background: rgba(242, 139, 130, 0.14); color: var(--bad); }
+.btn.sm { height: 40px; border-radius: 12px; font-size: 11.5px; padding: 0 14px; }
+.btn.wide { width: 100%; }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.acts2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.actions .btn.pri { flex: 1; min-width: 150px; }
+.linkbtn { border: 0; background: none; padding: 0; color: var(--accent); font-weight: 600; font-size: 13px; text-decoration: underline; text-underline-offset: 3px; text-align: left; }
+
+/* ---------- поля ---------- */
 .field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .field > span, .flabel { font-size: 12.5px; color: var(--muted); }
-.in { width: 100%; min-width: 0; background: var(--bg); border: 1.5px solid var(--line); border-radius: 8px; padding: 11px 12px; font-size: 16px; line-height: 1.25; }
+.in { width: 100%; min-width: 0; background: var(--bg); border: 1.5px solid var(--line); border-radius: 14px; padding: 12px; font-size: 16px; line-height: 1.25; color: var(--text); }
 .in:focus { border-color: var(--accent); outline: none; }
 .in.bad { border-color: var(--bad); }
+select.in { appearance: none; -webkit-appearance: none; background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%); background-position: calc(100% - 18px) 52%, calc(100% - 13px) 52%; background-size: 5px 5px; background-repeat: no-repeat; padding-right: 34px; }
 .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .date-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: end; }
-.wdname { font: 600 22px/1 var(--f-display); text-transform: uppercase; padding-bottom: 10px; min-width: 2.2em; text-align: right; }
-.seg { display: flex; gap: 3px; padding: 3px; background: var(--surface-2); border-radius: 9px; }
-.seg button { flex: 1; min-width: 0; border: 0; background: transparent; border-radius: 7px; padding: 9px 6px; font-size: 14px; color: var(--ink-2); }
-.seg button[aria-pressed="true"] { background: var(--surface); color: var(--ink); font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,.12); }
+.wdname { font: 800 22px/1 var(--fu); text-transform: uppercase; padding-bottom: 12px; min-width: 2.2em; text-align: right; }
+.seg { display: flex; gap: 3px; padding: 3px; background: var(--bg); border-radius: 14px; }
+.seg button { flex: 1; min-width: 0; border: 0; background: transparent; border-radius: 11px; padding: 10px 6px; font-size: 14px; color: var(--muted); }
+.seg button[aria-pressed="true"] { background: var(--card2); color: var(--text); font-weight: 600; }
 .seg.wrap-seg { flex-wrap: wrap; }
 .seg.wrap-seg button { flex: 1 1 auto; }
-.seg button small { display: block; font-family: var(--f-data); font-size: 11.5px; font-weight: 400; color: var(--muted); }
+.seg button small { display: block; font-size: 11.5px; font-weight: 400; color: var(--muted); font-variant-numeric: tabular-nums; }
 .seg.mini button { padding: 7px 9px; font-size: 13px; }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; }
-.chips button { border: 1.5px solid var(--line); background: var(--bg); border-radius: 999px; padding: 8px 12px; font-size: 14px; color: var(--ink-2); }
-.chips button[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--bg); font-weight: 600; }
-.pct-wrap { position: relative; display: block; }
-.pct-wrap .in { font: 600 28px/1.1 var(--f-display); padding: 10px 40px 10px 14px; }
-.pct-wrap::after { content: "%"; position: absolute; right: 14px; top: 50%; transform: translateY(-50%); font: 600 24px/1 var(--f-display); color: var(--muted); pointer-events: none; }
-.chip { display: inline-flex; align-items: center; gap: 8px; border: 1.5px solid var(--line); border-radius: 999px; padding: 8px 12px; background: var(--bg); font-size: 14px; user-select: none; cursor: pointer; }
+.chips button { border: 1.5px solid var(--line); background: transparent; border-radius: 12px; padding: 9px 12px; font-size: 14px; color: var(--text); }
+.chips button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--acc-ink); font-weight: 600; }
+.chip { display: inline-flex; align-items: center; gap: 8px; border: 1.5px solid var(--line); border-radius: 12px; padding: 9px 12px; font-size: 14px; user-select: none; cursor: pointer; }
 .chip input { accent-color: var(--accent); width: 16px; height: 16px; margin: 0; }
-.chip:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
-.fixnote { font-size: 13.5px; color: var(--ink-2); background: var(--surface-2); border-radius: 8px; padding: 10px 12px; }
-details.more > summary { cursor: pointer; color: var(--ink-2); font-size: 14px; list-style: none; display: inline-flex; gap: 6px; align-items: center; }
+.chip:has(input:checked) { border-color: var(--accent); background: var(--acc-soft); }
+.pct-wrap { position: relative; display: block; }
+.pct-wrap .in { font: 800 30px/1.1 var(--fu); padding: 10px 42px 10px 14px; }
+.pct-wrap::after { content: "%"; position: absolute; right: 14px; top: 50%; transform: translateY(-50%); font: 700 22px/1 var(--fu); color: var(--muted); pointer-events: none; }
+.fixnote { font-size: 13.5px; color: var(--muted); background: var(--bg); border-radius: 14px; padding: 10px 12px; }
+details.more > summary { cursor: pointer; color: var(--muted); font-size: 14px; list-style: none; display: inline-flex; gap: 6px; align-items: center; }
 details.more > summary::-webkit-details-marker { display: none; }
-details.more > summary::before { content: "+"; font-family: var(--f-data); color: var(--accent-ink); }
+details.more > summary::before { content: "+"; font-weight: 700; color: var(--accent); }
 details.more[open] > summary::before { content: "−"; }
 details.more[open] > .more-in { margin-top: 12px; display: flex; flex-direction: column; gap: 12px; }
-.preview { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; border-top: 1.5px dashed var(--line); padding-top: 12px; }
-.preview .formula { font: 400 13px/1.4 var(--f-data); color: var(--muted); min-width: 0; }
-.preview .res { font: 600 30px/1 var(--f-display); font-variant-numeric: tabular-nums; }
-.preview .res.dim { color: var(--muted); font-size: 18px; }
+.preview { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; border-top: 1px solid var(--line); padding-top: 12px; }
+.preview .formula { font-size: 13px; color: var(--muted); min-width: 0; }
+.preview .res { font: 800 28px/1 var(--fu); font-variant-numeric: tabular-nums; }
+.preview .res.dim { color: var(--muted); font-size: 16px; font-weight: 600; }
 .err { color: var(--bad); font-size: 13px; }
-.actions { display: flex; gap: 10px; flex-wrap: wrap; }
-.btn { border: 0; border-radius: 8px; padding: 13px 18px; font-weight: 600; font-size: 15px; background: var(--surface-2); color: var(--ink); }
-.btn.primary { background: var(--accent); color: #fff; flex: 1; min-width: 160px; }
-.btn.ghost { background: transparent; border: 1.5px solid var(--line); }
-.btn.danger { background: var(--bad-soft); color: var(--bad); }
-.btn.small { padding: 8px 12px; font-size: 13.5px; font-weight: 500; }
 .hint { font-size: 12.5px; color: var(--muted); }
-.w-text { font-size: 14px; color: var(--ink-2); }
+textarea.csv { width: 100%; height: 120px; font: 12px/1.4 ui-monospace, Menlo, Consolas, monospace; background: var(--bg); border: 1.5px solid var(--line); border-radius: 14px; padding: 10px; color: var(--text); }
 
-/* ---------- Деньги ---------- */
-.tbl-wrap { overflow-x: auto; }
-table.sum { width: 100%; border-collapse: collapse; font-size: 14px; }
-table.sum th { font: 500 11.5px/1.2 var(--f-data); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); text-align: right; padding: 0 0 8px 10px; }
-table.sum th:first-child { text-align: left; padding-left: 0; }
-table.sum td { padding: 9px 0 9px 10px; border-top: 1px solid var(--line); text-align: right; white-space: nowrap; font-family: var(--f-data); font-variant-numeric: tabular-nums; }
-table.sum td:first-child { text-align: left; padding-left: 0; font-family: var(--f-body); white-space: normal; color: var(--ink-2); }
-table.sum tr.key td, table.sum tr.key td:first-child { font-weight: 600; color: var(--ink); }
-table.sum tr.total td { border-top: 1.5px solid var(--ink); font-weight: 600; color: var(--ink); }
-table.sum .sub { display: block; font-size: 12px; color: var(--muted); font-weight: 400; }
-.note { font-size: 13px; color: var(--ink-2); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
-.linkbtn { border: 0; background: none; padding: 0; color: var(--accent-ink); font-weight: 600; font-size: 13px; text-decoration: underline; text-underline-offset: 3px; }
-.verdict { border-radius: 10px; padding: 14px 16px; display: flex; flex-direction: column; gap: 4px; }
-.verdict .vk { font-size: 13px; }
-.verdict .vv { font: 600 28px/1.05 var(--f-display); font-variant-numeric: tabular-nums; }
-.verdict.due { background: var(--accent-soft); color: var(--accent-ink); }
-.verdict.ok { background: var(--good-soft); color: var(--good); }
-.verdict.over { background: var(--warn-soft); color: var(--warn); }
-.kv { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; font-size: 14px; margin: 0; }
-.kv dt { color: var(--muted); }
-.kv dd { margin: 0; text-align: right; font-family: var(--f-data); font-variant-numeric: tabular-nums; }
-.kv dd.strong, .kv dt.strong { color: var(--ink); font-weight: 600; }
-.mbar { height: 8px; border-radius: 4px; background: var(--surface-2); display: flex; gap: 2px; overflow: hidden; }
-.mbar .f { background: var(--accent); border-radius: 4px; }
-.mbar .p { background: repeating-linear-gradient(-45deg, var(--accent-soft) 0 4px, var(--band) 4px 8px); border-radius: 4px; }
-.goal-line { font-size: 14px; color: var(--ink-2); }
-.goal-line b { color: var(--ink); }
-
-/* ---------- Прогноз ---------- */
-.chart { position: relative; min-width: 0; }
-.chart svg { display: block; width: 100%; height: auto; touch-action: pan-y; }
-.chart text { font-family: var(--f-data); font-size: 11px; fill: var(--muted); }
-.chart .lbl-strong { fill: var(--ink); font-weight: 500; font-size: 12px; }
-.chart .lbl-acc { fill: var(--accent-ink); font-weight: 500; }
-.c-grid { stroke: var(--line); stroke-width: 1; }
-.c-grid.dash { stroke-dasharray: 2 3; }
-.c-ref { stroke: var(--ink-2); stroke-width: 1; }
-.c-fact { fill: none; stroke: var(--accent); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
-.c-fc { fill: none; stroke: var(--accent); stroke-width: 2; stroke-dasharray: 5 4; stroke-linejoin: round; }
-.c-band { fill: var(--band); stroke: none; }
-.c-today { stroke: var(--ink-2); stroke-width: 1; stroke-dasharray: 3 3; }
-.c-dot { fill: var(--accent); stroke: var(--bg); stroke-width: 2; }
-.c-dot-h { fill: var(--bg); stroke: var(--accent); stroke-width: 2; }
-.c-cross { stroke: var(--ink-2); stroke-width: 1; }
-.c-bar { fill: var(--bar); }
-.c-bar.hi { fill: var(--ink); }
-.c-mean { stroke: var(--accent); stroke-width: 1.5; stroke-dasharray: 5 4; }
-.c-hit { fill: transparent; cursor: crosshair; }
-.tip { position: absolute; pointer-events: none; background: var(--ink); color: var(--bg); border-radius: 6px; padding: 7px 9px; font: 12px/1.4 var(--f-data); white-space: nowrap; transform: translate(-50%, -100%); box-shadow: 0 4px 14px rgba(0,0,0,.25); z-index: 3; }
-.tip b { font-weight: 500; }
-.chart-empty { padding: 30px 12px; text-align: center; color: var(--muted); border: 1.5px dashed var(--line); border-radius: 10px; font-size: 14px; }
-.legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12.5px; color: var(--ink-2); }
-.legend i { display: inline-block; width: 18px; height: 0; border-top: 2px solid var(--accent); vertical-align: middle; margin-right: 6px; }
-.legend i.dash { border-top-style: dashed; }
-.legend i.band { height: 10px; border: 0; background: var(--band); border-radius: 2px; }
-.legend i.bar { width: 8px; height: 10px; border: 0; background: var(--bar); border-radius: 2px; }
-.fc-line { font-size: 14px; color: var(--ink-2); }
-.fc-line b { color: var(--ink); font-weight: 600; }
-.scenario { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 14px; background: var(--warn-soft); color: var(--ink); border-radius: 8px; padding: 10px 12px; }
-.scenario b { font-family: var(--f-data); font-weight: 500; }
-details.params { border-top: 1px solid var(--line); padding-top: 12px; }
-details.params > summary { cursor: pointer; font-weight: 600; font-size: 14px; color: var(--ink-2); }
-details.params[open] > .params-in { margin-top: 14px; display: flex; flex-direction: column; gap: 14px; }
-.days { display: flex; gap: 5px; flex-wrap: wrap; }
-.days button { width: 42px; height: 38px; border-radius: 7px; border: 1.5px solid var(--line); background: var(--bg); font-size: 14px; color: var(--ink-2); }
-.days button[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--bg); font-weight: 600; }
-.months { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 330px), 1fr)); gap: 12px; }
-.mo { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
-.mo-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-.mo-name { font: 600 18px/1 var(--f-display); text-transform: uppercase; letter-spacing: 0.04em; }
-.pill { font: 500 11px/1 var(--f-data); letter-spacing: 0.04em; padding: 5px 7px; border-radius: 4px; text-transform: uppercase; white-space: nowrap; }
-.pill.fact { background: var(--surface-2); color: var(--ink-2); }
-.pill.mixed { background: var(--accent-soft); color: var(--accent-ink); }
-.pill.plan { border: 1px dashed var(--muted); color: var(--muted); }
-.pill.warn { background: var(--warn-soft); color: var(--warn); }
-.mo-v { font: 600 28px/1.05 var(--f-display); font-variant-numeric: tabular-nums; }
-.mo-v small { font: 400 13px/1 var(--f-data); color: var(--muted); margin-left: 6px; }
-.foot { font-size: 12.5px; color: var(--muted); }
-table.procs { width: 100%; border-collapse: collapse; font-size: 14px; }
-table.procs th { font: 500 11px/1.2 var(--f-data); letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); text-align: right; padding: 0 0 8px 8px; }
-table.procs th:first-child, table.procs td:first-child { text-align: left; padding-left: 0; }
-table.procs td { padding: 9px 0 9px 8px; border-top: 1px solid var(--line); text-align: right; font-family: var(--f-data); font-variant-numeric: tabular-nums; white-space: nowrap; }
-table.procs td:first-child { font-family: var(--f-body); color: var(--ink); white-space: normal; }
-
-/* ---------- Журнал ---------- */
+/* ---------- журнал ---------- */
 .log { display: flex; flex-direction: column; gap: 8px; }
-.log details { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
-.log summary { cursor: pointer; padding: 12px 14px; display: flex; justify-content: space-between; gap: 10px; align-items: baseline; list-style: none; }
+.log details { background: var(--card); border-radius: 20px; overflow: hidden; }
+.log summary { cursor: pointer; padding: 14px 16px; display: flex; justify-content: space-between; gap: 10px; align-items: baseline; list-style: none; }
 .log summary::-webkit-details-marker { display: none; }
-.log summary .mname { font: 600 16px/1 var(--f-display); text-transform: uppercase; letter-spacing: 0.04em; }
-.log summary .mmeta { font: 400 12.5px/1.2 var(--f-data); color: var(--muted); text-align: right; }
+.log .mname { font: 700 13px/1 var(--fu); text-transform: uppercase; letter-spacing: 0.04em; }
+.log .mmeta { font-size: 12.5px; color: var(--muted); text-align: right; font-variant-numeric: tabular-nums; }
 .rows { border-top: 1px solid var(--line); }
-.r { width: 100%; display: grid; grid-template-columns: 50px minmax(0, 1fr) auto; gap: 10px; align-items: center; text-align: left; background: transparent; border: 0; border-bottom: 1px solid var(--line); padding: 10px 14px; }
+.r { width: 100%; display: grid; grid-template-columns: 46px minmax(0, 1fr) auto; gap: 10px; align-items: center; text-align: left; background: transparent; border: 0; border-bottom: 1px solid var(--line); padding: 11px 16px; color: var(--text); }
 .r:last-child { border-bottom: 0; }
-.r:hover { background: var(--surface-2); }
-.r.sel { background: var(--accent-soft); }
-.r-date { display: flex; align-items: baseline; gap: 5px; }
-.r-date b { font: 600 20px/1 var(--f-display); font-variant-numeric: tabular-nums; }
-.r-date span { font-size: 12px; color: var(--muted); }
+.r:active, .r.sel { background: var(--card2); }
+.r-date { display: flex; flex-direction: column; gap: 2px; }
+.r-date b { font: 700 18px/1 var(--fu); font-variant-numeric: tabular-nums; }
+.r-date span { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
 .r-what { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .r-what .w { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 14px; }
-.r-what .w .p { font-family: var(--f-data); font-weight: 500; }
+.r-what .p { font: 700 14px/1 var(--fu); }
 .r-what .n { font-size: 12px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.r.off .r-what .w, .r.sick .r-what .w { color: var(--muted); }
-.r-sum { text-align: right; font-family: var(--f-data); font-variant-numeric: tabular-nums; font-size: 14px; white-space: nowrap; }
-.r-sum small { display: block; font-size: 11.5px; color: var(--accent-ink); }
-.empty { padding: 22px 16px; border: 1.5px dashed var(--line); border-radius: 10px; color: var(--ink-2); font-size: 14px; display: flex; flex-direction: column; gap: 6px; }
-.tools { display: flex; gap: 8px; flex-wrap: wrap; }
-textarea.csv { width: 100%; height: 120px; font: 12px/1.4 var(--f-data); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 8px; }
+.r.off .w, .r.sick .w { color: var(--muted); }
+.r-sum { text-align: right; font-variant-numeric: tabular-nums; font-size: 14px; font-weight: 600; white-space: nowrap; }
+.r-sum small { display: block; font-size: 11.5px; font-weight: 500; color: var(--accent); }
+.pill { font-size: 10.5px; font-weight: 700; letter-spacing: 0.05em; padding: 4px 7px; border-radius: 7px; text-transform: uppercase; white-space: nowrap; line-height: 1; }
+.pill.fact { background: var(--card2); color: var(--muted); }
+.pill.mixed { background: var(--acc-soft); color: var(--accent); }
+.pill.plan { box-shadow: inset 0 0 0 1px var(--line); color: var(--muted); }
+.pill.warn { background: rgba(247, 209, 84, 0.14); color: var(--warn); }
+.pill.role { background: var(--acc-soft); color: var(--accent); }
+.empty { padding: 22px 16px; border: 1.5px dashed var(--line); border-radius: 20px; color: var(--muted); font-size: 14px; display: flex; flex-direction: column; gap: 10px; align-items: center; text-align: center; }
+.empty b { color: var(--text); }
 
-/* ---------- Настройки ---------- */
-.set-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+/* ---------- деньги ---------- */
+.kv { display: grid; grid-template-columns: auto 1fr; gap: 8px 12px; font-size: 14px; margin: 0; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+.kv .strong { color: var(--text); font-weight: 600; }
+.tbl-wrap { overflow-x: auto; }
+table.sum { width: 100%; border-collapse: collapse; font-size: 14px; }
+table.sum th { font-size: 10.5px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); text-align: right; padding: 0 0 8px 10px; }
+table.sum th:first-child { text-align: left; padding-left: 0; }
+table.sum td { padding: 10px 0 10px 10px; border-top: 1px solid var(--line); text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+table.sum td:first-child { text-align: left; padding-left: 0; white-space: normal; color: var(--muted); }
+table.sum tr.key td, table.sum tr.key td:first-child, table.sum tr.total td, table.sum tr.total td:first-child { color: var(--text); font-weight: 600; }
+table.sum tr.total td { border-top: 2px solid var(--text); }
+table.sum .sub { display: block; font-size: 12px; color: var(--muted); font-weight: 400; }
+.note { font-size: 13px; color: var(--muted); display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+
+/* ---------- прогноз ---------- */
+.chart { position: relative; min-width: 0; }
+.chart svg { display: block; width: 100%; height: auto; touch-action: pan-y; }
+.chart text { font-family: var(--fo); font-size: 11px; fill: var(--muted); }
+.chart .lbl-strong { fill: var(--text); font-weight: 600; font-size: 12px; }
+.chart .lbl-acc { fill: var(--accent); font-weight: 600; }
+.c-grid { stroke: var(--line); stroke-width: 1; }
+.c-grid.dash { stroke-dasharray: 2 3; }
+.c-ref { stroke: var(--muted); stroke-width: 1; }
+.c-fact { fill: none; stroke: var(--accent); stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; }
+.c-fc { fill: none; stroke: var(--accent); stroke-width: 2; stroke-dasharray: 5 4; }
+.c-band { fill: var(--band); stroke: none; }
+.c-today { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 3 3; }
+.c-dot { fill: var(--accent); stroke: var(--card); stroke-width: 2; }
+.c-dot-h { fill: var(--card); stroke: var(--accent); stroke-width: 2; }
+.c-cross { stroke: var(--muted); stroke-width: 1; }
+.c-bar { fill: var(--bar); }
+.c-bar.hi { fill: var(--text); }
+.c-mean { stroke: var(--accent); stroke-width: 1.5; stroke-dasharray: 5 4; }
+.c-hit { fill: transparent; cursor: crosshair; }
+.tip { position: absolute; pointer-events: none; background: var(--text); color: var(--bg); border-radius: 10px; padding: 7px 9px; font-size: 12px; line-height: 1.4; white-space: nowrap; transform: translate(-50%, -100%); z-index: 3; font-variant-numeric: tabular-nums; }
+.tip b { font-weight: 600; }
+.chart-empty { padding: 30px 12px; text-align: center; color: var(--muted); border: 1.5px dashed var(--line); border-radius: 20px; font-size: 14px; }
+.legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: var(--muted); }
+.legend i { display: inline-block; width: 18px; height: 0; border-top: 2.5px solid var(--accent); vertical-align: middle; margin-right: 6px; }
+.legend i.dash { border-top-style: dashed; border-top-width: 2px; }
+.legend i.band { height: 10px; border: 0; background: var(--band); }
+.legend i.bar { width: 8px; height: 10px; border: 0; background: var(--bar); }
+.fc-line { font-size: 14px; color: var(--muted); }
+.fc-line b { color: var(--text); font-weight: 600; }
+.scenario { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 14px; background: var(--card); border-radius: 16px; padding: 12px 14px; }
+.scenario b { font-weight: 600; }
+details.params > summary { cursor: pointer; font-weight: 600; font-size: 14px; color: var(--text); list-style: none; display: flex; justify-content: space-between; }
+details.params > summary::-webkit-details-marker { display: none; }
+details.params > summary::after { content: "+"; color: var(--accent); font-weight: 700; }
+details.params[open] > summary::after { content: "−"; }
+details.params[open] > .params-in { margin-top: 14px; display: flex; flex-direction: column; gap: 14px; }
+.days { display: flex; gap: 5px; flex-wrap: wrap; }
+.days button { width: 42px; height: 38px; border-radius: 11px; border: 1.5px solid var(--line); background: transparent; font-size: 14px; color: var(--muted); }
+.days button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--acc-ink); font-weight: 600; }
+.months { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 10px; }
+.mo { background: var(--card); border-radius: 20px; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.mo-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.mo-name { font: 700 13px/1 var(--fu); text-transform: uppercase; letter-spacing: 0.04em; }
+.mo-v { font: 800 26px/1.05 var(--fu); font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+.mo-v small { font: 500 13px/1 var(--fo); color: var(--muted); margin-left: 6px; letter-spacing: 0; }
+.mbar { height: 8px; background: var(--line); display: flex; gap: 2px; overflow: hidden; }
+.mbar .f { background: var(--accent); }
+.mbar .p { background: repeating-linear-gradient(-45deg, var(--acc-soft) 0 4px, var(--band) 4px 8px); }
+body[data-style="classic"] .mbar, body[data-style="classic"] .mbar span { border-radius: 4px; }
+.foot { font-size: 12.5px; color: var(--muted); }
+table.procs { width: 100%; border-collapse: collapse; font-size: 14px; }
+table.procs th { font-size: 10.5px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); text-align: right; padding: 0 0 8px 8px; }
+table.procs th:first-child, table.procs td:first-child { text-align: left; padding-left: 0; }
+table.procs td { padding: 10px 0 10px 8px; border-top: 1px solid var(--line); text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+table.procs td:first-child { white-space: normal; }
+
+/* ---------- прогресс ---------- */
+.lvl { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 16px; align-items: center; }
+.lvl .mbox { width: 92px; height: 104px; border-radius: 20px; background: var(--card); display: grid; place-items: center; }
+.lvl .mbox .emo { font-size: 54px; line-height: 1; }
+.lvl .big { color: var(--game); }
+.streaks { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.weeks { display: flex; gap: 4px; flex-wrap: wrap; }
+.weeks i { width: 18px; height: 18px; background: var(--line); display: grid; place-items: center; }
+.weeks i.on { background: var(--game); }
+.weeks i.cur { box-shadow: inset 0 0 0 2px var(--game); background: transparent; }
+body[data-style="classic"] .weeks i { border-radius: 50%; }
+.badges { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.bd { background: var(--card); border: 0; border-radius: 16px; padding: 12px 4px 10px; display: flex; flex-direction: column; align-items: center; gap: 8px; color: var(--text); font-size: 11px; line-height: 1.2; text-align: center; min-width: 0; }
+.bd .bi { width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; background: var(--game-soft); color: var(--game); }
+.bd .bi .emo { font-size: 24px; line-height: 1; }
+.bd.off { color: var(--muted); }
+.bd.off .bi { background: var(--card2); color: var(--muted); opacity: 0.55; }
+.moods { display: flex; gap: 10px; overflow-x: auto; scrollbar-width: none; }
+.moods::-webkit-scrollbar { display: none; }
+.mood { flex: none; min-width: 112px; background: var(--card); border-radius: 20px; padding: 12px; display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; }
+.mood .emo { font-size: 36px; line-height: 1; }
+.mood b { font: 700 12px/1 var(--fu); text-transform: uppercase; letter-spacing: 0.04em; }
+.mood span { font-size: 12px; color: var(--muted); }
+.rules { display: flex; flex-direction: column; gap: 8px; font-size: 14px; }
+.rules div { display: flex; justify-content: space-between; gap: 10px; }
+.rules b { font: 700 13px/1.2 var(--fu); color: var(--game); white-space: nowrap; }
+.wk { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 0; border-top: 1px solid var(--line); font-size: 14px; }
+.wk:first-child { border-top: 0; }
+.wk span:first-child { min-width: 0; }
+.wk small { display: block; color: var(--muted); font-size: 12px; }
+.wk .ok { color: var(--game); font-weight: 600; white-space: nowrap; }
+.wk .no { color: var(--muted); white-space: nowrap; }
+
+/* ---------- ещё ---------- */
+.menu { background: var(--card); border-radius: 20px; overflow: hidden; }
+.mrow { display: flex; align-items: center; gap: 12px; width: 100%; padding: 13px 16px; background: none; border: 0; border-top: 1px solid var(--line); color: var(--text); text-align: left; font-size: 15px; }
+.mrow:first-child { border-top: 0; }
+.mi { width: 36px; height: 36px; border-radius: 12px; background: var(--card2); display: grid; place-items: center; color: var(--accent); flex: none; }
+.mi.game { color: var(--game); }
+.mt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.ms { font-size: 12.5px; color: var(--muted); }
+.chev { color: var(--muted); font-size: 20px; line-height: 1; }
+.sw { width: 46px; height: 28px; border-radius: 14px; background: var(--line); position: relative; flex: none; transition: background 0.15s; }
+.sw::after { content: ""; position: absolute; left: 3px; top: 3px; width: 22px; height: 22px; border-radius: 50%; background: var(--text); transition: transform 0.15s; }
+.sw.on { background: var(--accent); }
+.sw.on::after { transform: translateX(18px); background: var(--acc-ink); }
+.status { font-size: 12.5px; color: var(--muted); display: flex; gap: 8px; align-items: center; }
+.status .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); flex: none; }
+.status .dot.ok { background: var(--good); }
+.status .dot.warn { background: var(--warn); }
+.ver { font-size: 12px; color: var(--muted); text-align: center; }
+.stylec { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 12px; align-items: center; width: 100%; text-align: left; border: 0; border-radius: 20px; background: var(--bg); color: var(--text); padding: 14px; box-shadow: inset 0 0 0 1.5px var(--line); }
+.stylec.on { box-shadow: inset 0 0 0 2px var(--accent); }
+.stylec .sx { width: 56px; height: 56px; border-radius: 16px; background: var(--card2); display: grid; place-items: center; }
+.stylec b { font-size: 16px; }
+.stylec .sd { font-size: 13px; color: var(--muted); }
+.stylec .sw2 { display: flex; gap: 4px; margin-top: 8px; }
+.stylec .sw2 i { width: 22px; height: 10px; }
 .proc-list { display: flex; flex-direction: column; }
-.proc-row { display: grid; grid-template-columns: minmax(0, 1fr) 104px auto; gap: 8px; align-items: center; padding: 8px 0; border-top: 1px solid var(--line); }
+.proc-row { display: grid; grid-template-columns: minmax(0, 1fr) 100px auto; gap: 8px; align-items: center; padding: 8px 0; border-top: 1px solid var(--line); }
 .proc-row:first-child { border-top: 0; }
 .proc-row .pn { font-size: 14.5px; font-weight: 500; }
 .proc-row .in { padding: 9px 10px; font-size: 15px; }
@@ -246,66 +344,313 @@ textarea.csv { width: 100%; height: 120px; font: 12px/1.4 var(--f-data); backgro
 .role-row .pn { font-size: 14.5px; font-weight: 500; }
 .role-row .chip { justify-self: start; }
 .role-row .in { padding: 9px 10px; font-size: 15px; }
-.wiz-top { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
-.wstep { display: flex; flex-direction: column; gap: 14px; }
-.status { font-size: 12.5px; color: var(--muted); display: flex; gap: 8px; align-items: center; }
-.status .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); flex: none; }
-.status .dot.ok { background: var(--good); }
-.status .dot.warn { background: var(--warn); }
+.faq details { border-top: 1px solid var(--line); padding: 12px 0; }
+.faq details:first-child { border-top: 0; }
+.faq summary { cursor: pointer; font-weight: 600; list-style: none; display: flex; justify-content: space-between; gap: 10px; }
+.faq summary::-webkit-details-marker { display: none; }
+.faq summary::after { content: "+"; color: var(--accent); font-weight: 700; }
+.faq details[open] summary::after { content: "−"; }
+.faq p { margin-top: 8px; color: var(--muted); font-size: 14px; }
 
-/* ---------- Нижнее меню ---------- */
-.tabbar {
-  position: fixed; left: 0; right: 0; bottom: 0; z-index: 15; background: var(--surface); border-top: 1px solid var(--line);
-  padding: 6px max(8px, env(safe-area-inset-left, 0px)) calc(6px + env(safe-area-inset-bottom, 0px)) max(8px, env(safe-area-inset-right, 0px));
-}
+/* ---------- нижнее меню ---------- */
+.tabbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; background: var(--bg); border-top: 1px solid var(--line); padding: 0 max(6px, env(safe-area-inset-left, 0px)) env(safe-area-inset-bottom, 0px) max(6px, env(safe-area-inset-right, 0px)); }
 .tabbar-in { max-width: 560px; margin: 0 auto; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); }
-.tabbar button { border: 0; background: none; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 4px 0; color: var(--muted); font-size: 11px; font-weight: 500; min-width: 0; }
-.tb-ic { width: 46px; height: 28px; border-radius: 14px; display: grid; place-items: center; transition: background .15s; }
-.tabbar svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-.tabbar button[aria-current="page"] { color: var(--accent-ink); font-weight: 600; }
-.tabbar button[aria-current="page"] .tb-ic { background: var(--accent-soft); }
-.toast {
-  position: fixed; left: 50%; bottom: calc(var(--tabbar-h) + 14px + env(safe-area-inset-bottom, 0px)); transform: translate(-50%, 20px);
-  background: var(--ink); color: var(--bg); padding: 11px 16px; border-radius: 8px; font-size: 14px; opacity: 0; pointer-events: none;
-  transition: opacity .2s, transform .2s; max-width: calc(100% - 32px); z-index: 20;
-}
+.tabbar button { border: 0; background: none; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 0 0 9px; color: var(--muted); font-size: 11px; font-weight: 500; min-width: 0; }
+.tabbar button::before { content: ""; width: 24px; height: 3px; background: transparent; }
+.tabbar button[aria-current="page"] { color: var(--accent); font-weight: 600; }
+.tabbar button[aria-current="page"]::before { background: var(--accent); }
+body[data-style="classic"] .tabbar button::before { border-radius: 2px; }
+.ti { display: flex; height: 22px; align-items: center; justify-content: center; }
+
+/* ---------- шторки ---------- */
+.ovl { position: fixed; inset: 0; z-index: 30; background: rgba(0, 0, 0, 0.62); display: flex; align-items: flex-end; justify-content: center; opacity: 0; transition: opacity 0.18s; }
+.ovl.open { opacity: 1; }
+.sheet { width: 100%; max-width: 560px; max-height: calc(100% - 20px - env(safe-area-inset-top, 0px)); background: var(--card); border-radius: 20px 20px 0 0; display: flex; flex-direction: column; transform: translateY(28px); transition: transform 0.2s; }
+.ovl.open .sheet { transform: none; }
+.ovl.full .sheet { height: calc(100% - 10px - env(safe-area-inset-top, 0px)); }
+.sheet-h { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 16px 16px 10px; }
+.sheet-t { font: 700 15px/1.2 var(--fu); text-transform: uppercase; letter-spacing: 0.04em; }
+.sheet-x { width: 36px; height: 36px; border-radius: 12px; border: 0; background: var(--card2); color: var(--text); font-size: 20px; line-height: 1; display: grid; place-items: center; flex: none; }
+.sheet-b { overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 4px 16px calc(20px + env(safe-area-inset-bottom, 0px)); display: flex; flex-direction: column; gap: 14px; }
+.sheet .in { background: var(--bg); }
+.sheet .seg { background: var(--bg); }
+.wstep { display: flex; flex-direction: column; gap: 14px; }
+.w-text { font-size: 14px; color: var(--muted); }
+
+/* ---------- истории-слайды ---------- */
+.slides { position: fixed; inset: 0; z-index: 40; background: var(--bg); display: flex; flex-direction: column; gap: 18px; padding: calc(12px + env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) calc(16px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
+.sl-top { display: flex; gap: 10px; align-items: center; max-width: 560px; width: 100%; margin: 0 auto; }
+.sl-top .cells { flex: 1; }
+.sl-top .cells i.on { background: var(--accent); }
+.sl-body { flex: 1; min-height: 0; overflow-y: auto; max-width: 560px; width: 100%; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; justify-content: center; }
+.sl-art { width: 148px; height: 148px; border-radius: 28px; background: var(--card); display: grid; place-items: center; color: var(--accent); }
+.sl-art .emo { font-size: 72px; line-height: 1; }
+.sl-k { font: 700 11px/1 var(--fu); letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); }
+.sl-t { font: 800 26px/1.15 var(--fu); letter-spacing: -0.01em; }
+body[data-style="classic"] .sl-t { font-weight: 700; }
+.sl-d { font-size: 16px; color: var(--muted); max-width: 46ch; }
+.sl-d b { color: var(--text); font-weight: 600; }
+.sl-nav { display: grid; grid-template-columns: 1fr 2fr; gap: 10px; max-width: 560px; width: 100%; margin: 0 auto; }
+
+/* ---------- подсказки по разделам ---------- */
+.tour { position: fixed; inset: 0; z-index: 45; opacity: 0; transition: opacity 0.18s; }
+.tour.show { opacity: 1; }
+.tour-spot { position: fixed; border-radius: 20px; box-shadow: 0 0 0 200vmax rgba(5, 5, 7, 0.8); transition: left 0.25s, top 0.25s, width 0.25s, height 0.25s; pointer-events: none; outline: 2px solid var(--accent); outline-offset: 2px; }
+.tour-tip { position: fixed; left: max(16px, env(safe-area-inset-left, 0px)); right: max(16px, env(safe-area-inset-right, 0px)); max-width: 420px; margin: 0 auto; background: var(--card2); border-radius: 20px; padding: 16px; display: flex; flex-direction: column; gap: 8px; box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5); }
+.tour-k { font: 700 11px/1 var(--fu); color: var(--accent); letter-spacing: 0.1em; text-transform: uppercase; }
+.tour-t { font-weight: 600; font-size: 17px; }
+.tour-d { color: var(--muted); font-size: 14px; }
+.tour-nav { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 4px; }
+.tour-skip, .tour-off { border: 0; background: none; color: var(--muted); font-size: 13.5px; padding: 6px 0; }
+.tour-off { text-decoration: underline; text-underline-offset: 3px; font-size: 12.5px; align-self: flex-start; }
+
+.toast { position: fixed; left: 50%; bottom: calc(var(--tabbar-h) + 14px + env(safe-area-inset-bottom, 0px)); transform: translate(-50%, 20px); background: var(--text); color: var(--bg); padding: 11px 16px; border-radius: 14px; font-size: 14px; font-weight: 500; opacity: 0; pointer-events: none; transition: opacity 0.2s, transform 0.2s; max-width: calc(100% - 32px); z-index: 60; }
 .toast.show { opacity: 1; transform: translate(-50%, 0); }
-@media (prefers-reduced-motion: reduce) { .toast, .tb-ic { transition: none; } }
-@media (max-width: 420px) { .card { padding: 14px; } }
+@media (prefers-reduced-motion: reduce) { .toast, .ovl, .sheet, .tour, .tour-spot, .sw, .sw::after { transition: none; } }
+@media (max-width: 370px) { .big { font-size: 50px; } .badges { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 </style>
 </head>
-<body>
+<body data-style="pixel">
 <main class="wrap">
 
-  <!-- ========== СМЕНА ========== -->
-  <div class="view" data-view="shift" id="v-shift">
-    <header class="label" aria-label="Сводка вахты">
-      <div class="stripe"></div>
-      <div class="label-in">
-        <div class="label-top">
-          <div>
-            <div class="eyebrow" id="h-period">Вахта</div>
-            <h1>Журнал вахты</h1>
-          </div>
-          <div class="tariff-tag" id="h-tariff">Тариф 8 600 ₽ = 100%</div>
-        </div>
-        <div class="hero-nums">
-          <div>
-            <div class="hero-k">Заработано</div>
-            <div class="hero-v" id="h-fact">—</div>
-            <div class="hero-s" id="h-fact-s">Загружаю смены…</div>
-          </div>
-          <div>
-            <div class="hero-k" id="h-end-k">Прогноз к концу вахты</div>
-            <div class="hero-v accent" id="h-end">—</div>
-            <div class="hero-s" id="h-end-s">&nbsp;</div>
-          </div>
-        </div>
+  <!-- ===== СМЕНЫ ===== -->
+  <div class="view" data-view="shifts" id="v-shifts">
+    <div class="hdr">
+      <div class="brand" id="h-brand">Вахта<span id="h-sched"></span></div>
+      <div class="gchips" id="h-chips">
+        <button type="button" class="gchip" data-go="prog" id="h-streak"></button>
+        <button type="button" class="gchip" data-go="prog" id="h-level"></button>
       </div>
-    </header>
+    </div>
+    <div class="stories" id="stories" aria-label="Обучение"></div>
+    <div class="hero" id="h-hero">
+      <span class="eyebrow" id="h-eye">Последняя смена</span>
+      <span class="big" id="h-big">—</span>
+      <span class="hsub" id="h-sub">&nbsp;</span>
+    </div>
+    <div class="card" id="goalcard"></div>
+    <div class="stats3" id="h-stats"></div>
+    <div class="acts2">
+      <button type="button" class="btn pri" id="add-btn">+ Смена</button>
+      <button type="button" class="btn out" data-go="fc" id="fc-btn">Прогноз</button>
+    </div>
+    <div class="card" id="challenge"></div>
+    <section class="sec" aria-labelledby="s-log">
+      <h2 class="sec-t" id="s-log">Журнал смен <span class="h-note">нажми строку, чтобы исправить</span></h2>
+      <div class="log" id="log"></div>
+    </section>
+  </div>
 
-    <section class="card" id="welcome" hidden aria-labelledby="w-title">
-      <div class="wiz-top"><h2 id="w-title">Настрой под себя</h2><span class="hint" id="w-stepno">Шаг 1 из 3</span></div>
+  <!-- ===== ПРОГНОЗ ===== -->
+  <div class="view" data-view="fc" id="v-fc" hidden>
+    <div class="hdr"><div class="brand">Прогноз</div></div>
+    <div class="hero" id="fc-hero">
+      <span class="eyebrow" id="fc-eye">К концу вахты</span>
+      <span class="big money" id="fc-big">—</span>
+      <span class="hsub" id="fc-sub">&nbsp;</span>
+    </div>
+    <section class="card" aria-labelledby="s-traj">
+      <div class="card-h"><h2 class="card-t" id="s-traj">Траектория</h2><span class="note-s">накопительно, ₽</span></div>
+      <div class="legend" aria-hidden="true"><span><i></i>факт</span><span><i class="dash"></i>по среднему</span><span><i class="band"></i>±1σ</span></div>
+      <div class="chart" id="c-traj"></div>
+      <p class="fc-line" id="fc-line"></p>
+    </section>
+    <div class="scenario" id="fc-scen" hidden></div>
+    <details class="card params" id="params">
+      <summary>Параметры прогноза</summary>
+      <div class="params-in">
+        <div class="field"><span class="flabel">Средний % для прогноза</span>
+          <div class="seg wrap-seg" role="group" aria-label="Средний процент" id="p-basis">
+            <button type="button" data-basis="all" aria-pressed="true">Вся вахта<small id="p-b-all">—</small></button>
+            <button type="button" data-basis="last10" aria-pressed="false">10 последних<small id="p-b-l10">—</small></button>
+            <button type="button" data-basis="manual" aria-pressed="false">Свой<small id="p-b-man">—</small></button>
+          </div>
+        </div>
+        <label class="field" for="p-manual" id="p-manual-f" hidden><span>Свой средний %</span><input class="in" id="p-manual" inputmode="decimal" autocomplete="off" placeholder="110"></label>
+        <label class="field" for="p-proc"><span>Процесс для прогноза</span><select class="in" id="p-proc"></select></label>
+        <div class="field"><span class="flabel">График</span><div class="seg wrap-seg" id="p-sched" role="group" aria-label="График"></div></div>
+        <div class="seg" id="p-stype" role="group" aria-label="Тип своего графика" hidden><button type="button" data-st="week" aria-pressed="true">По дням недели</button><button type="button" data-st="cycle" aria-pressed="false">Цикл «через»</button></div>
+        <div class="field" id="p-days-f" hidden><span class="flabel">Рабочие дни</span><div class="days" id="p-days" role="group" aria-label="Рабочие дни"></div></div>
+        <div class="row2" id="p-cyc-f" hidden>
+          <label class="field" for="p-con"><span>Работаю, дней</span><input class="in" id="p-con" inputmode="numeric" autocomplete="off"></label>
+          <label class="field" for="p-coff"><span>Отдыхаю, дней</span><input class="in" id="p-coff" inputmode="numeric" autocomplete="off"></label>
+        </div>
+        <label class="field" for="p-cstart" id="p-cstart-f" hidden><span>Первый день любого цикла смен</span><input class="in" type="date" id="p-cstart"></label>
+        <div class="row2">
+          <label class="field" for="p-att"><span>Явка, % смен графика</span><input class="in" id="p-att" inputmode="decimal" autocomplete="off"></label>
+          <label class="field" for="p-end"><span>Конец вахты</span><input class="in" type="date" id="p-end"></label>
+        </div>
+        <div class="row2">
+          <label class="field" for="p-adv"><span>Плановый аванс, ₽</span><input class="in" id="p-adv" inputmode="numeric" autocomplete="off"></label>
+          <label class="field" for="p-advday"><span>Каждый</span>
+            <select class="in" id="p-advday"><option value="1">понедельник</option><option value="2">вторник</option><option value="3">среда</option><option value="4">четверг</option><option value="5">пятница</option><option value="6">суббота</option><option value="0">воскресенье</option></select>
+          </label>
+        </div>
+        <p class="hint">Прогноз: каждая смена графика × явка × тариф процесса × средний %. Коридор — разброс твоего % от смены к смене; риск пропусков в него не входит, его задаёт явка.</p>
+      </div>
+    </details>
+    <section class="sec" aria-labelledby="s-mon"><h2 class="sec-t" id="s-mon">По месяцам</h2><div class="months" id="months"></div><p class="foot" id="mon-foot"></p></section>
+    <section class="card" aria-labelledby="s-procstat"><h2 class="card-t" id="s-procstat">По процессам</h2><div class="tbl-wrap" id="procs"></div></section>
+    <section class="card" aria-labelledby="s-pct">
+      <div class="card-h"><h2 class="card-t" id="s-pct">Выработка по сменам</h2></div>
+      <span class="note-s" id="pct-note"></span>
+      <div class="legend" aria-hidden="true"><span><i class="bar"></i>% за смену</span><span><i class="dash"></i>средний %</span></div>
+      <div class="chart" id="c-pct"></div>
+    </section>
+  </div>
+
+  <!-- ===== ВЫПЛАТЫ ===== -->
+  <div class="view" data-view="pay" id="v-pay" hidden>
+    <div class="hdr"><div class="brand">Выплаты</div></div>
+    <div class="hero" id="pay-hero">
+      <span class="eyebrow" id="pay-eye">Ещё должны за отработанное</span>
+      <span class="big money" id="pay-big">—</span>
+      <span class="hsub" id="pay-sub">&nbsp;</span>
+    </div>
+    <section class="card" id="rc-card" aria-labelledby="s-recon">
+      <h2 class="card-t" id="s-recon">Сверка выплат</h2>
+      <dl class="kv" id="rc-kv"></dl>
+      <p class="note-s">Аванс вноси в смене того дня, когда пришли деньги. Зарплату по итогам вахты — в смене, в «Премия, штраф, зарплата».</p>
+    </section>
+    <section class="card" id="goal-f" aria-labelledby="s-goal">
+      <h2 class="card-t" id="s-goal">Цель вахты</h2>
+      <label class="field" for="g-goal"><span>Хочу получить на руки к концу вахты, ₽</span>
+        <input class="in" id="g-goal" inputmode="numeric" autocomplete="off" placeholder="например, 300000">
+      </label>
+      <p class="fc-line" id="g-line" hidden></p>
+    </section>
+    <section class="card" id="t-sum" aria-labelledby="s-sum">
+      <h2 class="card-t" id="s-sum">Итог вахты</h2>
+      <div class="tbl-wrap"><table class="sum">
+        <thead><tr><th></th><th>Сейчас</th><th id="t-end-h">К концу</th></tr></thead>
+        <tbody id="t-body"></tbody>
+      </table></div>
+      <div class="note" id="t-note"></div>
+    </section>
+  </div>
+
+  <!-- ===== ПРОГРЕСС ===== -->
+  <div class="view" data-view="prog" id="v-prog" hidden>
+    <div class="hdr"><div class="brand">Прогресс</div><div class="gchips"><span class="gchip" id="pg-pts"></span></div></div>
+    <div class="lvl" id="lvl">
+      <div class="mbox" id="pg-mascot"></div>
+      <div class="hero">
+        <span class="eyebrow">Уровень</span>
+        <span class="big" id="pg-level">1</span>
+        <div class="cells tall" id="pg-cells"></div>
+        <span class="hsub muted" id="pg-next"></span>
+      </div>
+    </div>
+    <div class="stats3" id="pg-stats"></div>
+    <div class="card" id="pg-chal"></div>
+    <section class="card" id="pg-weeks-c" aria-labelledby="s-wk">
+      <div class="card-h"><h2 class="card-t" id="s-wk">Серия недель</h2><span class="note-s" id="pg-weeks-n"></span></div>
+      <div class="weeks" id="pg-weeks"></div>
+      <p class="note-s">Неделя засчитывается, если в ней есть хотя бы одна запись: смена, выходной или больничный. Больничный серию не рвёт.</p>
+    </section>
+    <section class="sec" aria-labelledby="s-bd"><h2 class="sec-t" id="s-bd">Значки <span class="h-note" id="pg-bd-n"></span></h2><div class="badges" id="pg-badges"></div></section>
+    <section class="sec" aria-labelledby="s-moods"><h2 class="sec-t" id="s-moods">Итоги месяцев</h2><div class="moods" id="pg-moods"></div></section>
+    <details class="card params" id="pg-rules-d">
+      <summary>Как начисляются очки</summary>
+      <div class="params-in rules" id="pg-rules"></div>
+    </details>
+  </div>
+
+  <!-- ===== ЕЩЁ ===== -->
+  <div class="view" data-view="more" id="v-more" hidden>
+    <div class="hdr"><div class="brand">Ещё</div></div>
+    <div class="stories" id="stories2" aria-label="Обучение"></div>
+    <section class="sec" aria-labelledby="s-learn"><h2 class="sec-t" id="s-learn">Обучение</h2>
+      <div class="menu" id="m-learn">
+        <button type="button" class="mrow" data-act="slides"><span class="mi" data-ic="play"></span><span class="mt">Как пользоваться<span class="ms">Короткие истории по разделам</span></span><span class="chev">›</span></button>
+        <button type="button" class="mrow" data-act="tours" id="m-tours"><span class="mi" data-ic="bolt"></span><span class="mt">Подсказки по разделам<span class="ms">Затемнение с пояснениями при первом входе</span></span><span class="sw" id="m-tours-sw"></span></button>
+        <button type="button" class="mrow" data-act="faq"><span class="mi" data-ic="qmark"></span><span class="mt">Вопросы и ответы</span><span class="chev">›</span></button>
+        <button type="button" class="mrow" data-act="news"><span class="mi game" data-ic="gift"></span><span class="mt">Что нового<span class="ms" id="m-ver"></span></span><span class="chev">›</span></button>
+      </div>
+    </section>
+    <section class="sec" aria-labelledby="s-look"><h2 class="sec-t" id="s-look">Оформление</h2>
+      <div class="menu" id="m-look">
+        <button type="button" class="mrow" data-act="style"><span class="mi" data-ic="palette"></span><span class="mt">Стиль оформления<span class="ms" id="m-style-n"></span></span><span class="chev">›</span></button>
+      </div>
+    </section>
+    <section class="sec" aria-labelledby="s-work"><h2 class="sec-t" id="s-work">Работа</h2>
+      <div class="menu" id="m-work">
+        <button type="button" class="mrow" data-act="company"><span class="mi" data-ic="build"></span><span class="mt">Компания и роли<span class="ms" id="m-company-n"></span></span><span class="chev">›</span></button>
+        <button type="button" class="mrow" data-act="procs"><span class="mi" data-ic="list"></span><span class="mt">Процессы и тарифы<span class="ms" id="m-procs-n"></span></span><span class="chev">›</span></button>
+        <button type="button" class="mrow" data-act="rates"><span class="mi" data-ic="coin"></span><span class="mt">Ставки и налоги<span class="ms" id="m-rates-n"></span></span><span class="chev">›</span></button>
+      </div>
+    </section>
+    <section class="sec" aria-labelledby="s-data"><h2 class="sec-t" id="s-data">Данные</h2>
+      <div class="menu" id="m-data">
+        <button type="button" class="mrow" data-act="data"><span class="mi" data-ic="swap"></span><span class="mt">Выгрузка и перенос<span class="ms">Excel, перенос из таблицы</span></span><span class="chev">›</span></button>
+      </div>
+      <div class="status" id="status"><span class="dot"></span><span>Загружаю смены…</span></div>
+    </section>
+    <p class="ver" id="ver"></p>
+  </div>
+</main>
+
+<nav class="tabbar" aria-label="Разделы">
+  <div class="tabbar-in">
+    <button type="button" data-tab="shifts" aria-current="page"><span class="ti" data-ic="cal"></span>Смены</button>
+    <button type="button" data-tab="fc"><span class="ti" data-ic="chart"></span>Прогноз</button>
+    <button type="button" data-tab="pay"><span class="ti" data-ic="coin"></span>Выплаты</button>
+    <button type="button" data-tab="prog"><span class="ti" data-ic="trophy"></span>Прогресс</button>
+    <button type="button" data-tab="more"><span class="ti" data-ic="dots"></span>Ещё</button>
+  </div>
+</nav>
+
+<!-- ===== Шторка: смена ===== -->
+<div class="ovl" id="sh-shift" hidden>
+  <div class="sheet" role="dialog" aria-labelledby="f-title">
+    <div class="sheet-h"><h2 class="sheet-t" id="f-title">Новая смена</h2><button type="button" class="sheet-x" data-close aria-label="Закрыть">×</button></div>
+    <form class="sheet-b" id="f" novalidate>
+      <span class="hint" id="f-hint"></span>
+      <div class="date-row">
+        <label class="field" for="f-date"><span>Дата</span><input class="in" type="date" id="f-date" required></label>
+        <div class="wdname" id="f-wd" aria-hidden="true"></div>
+      </div>
+      <div class="seg" role="group" aria-label="Тип дня" id="f-kind">
+        <button type="button" data-kind="work" aria-pressed="true">Смена</button>
+        <button type="button" data-kind="off" aria-pressed="false">Выходной</button>
+        <button type="button" data-kind="sick" aria-pressed="false">Больничный</button>
+      </div>
+      <div id="work-fields" style="display:flex;flex-direction:column;gap:12px">
+        <div class="field"><span class="flabel">Процесс</span><div class="chips" id="f-proc" role="group" aria-label="Процесс"></div></div>
+        <div class="field" id="f-role-f" hidden><span class="flabel">Роль в смене</span><div class="chips" id="f-role" role="group" aria-label="Роль"></div></div>
+        <p class="fixnote" id="f-fixnote" hidden></p>
+        <label class="field" for="f-pct" id="f-pct-f"><span id="f-pct-l">Выработка за смену</span>
+          <span class="pct-wrap"><input class="in" id="f-pct" inputmode="decimal" autocomplete="off" placeholder="100"></span>
+        </label>
+      </div>
+      <label class="field" for="f-adv"><span>Аванс в этот день, ₽</span><input class="in" id="f-adv" inputmode="numeric" autocomplete="off" placeholder="0"></label>
+      <details class="more" id="f-more">
+        <summary>Премия, штраф, зарплата, заметка</summary>
+        <div class="more-in">
+          <div class="row2">
+            <label class="field" for="f-bonus"><span>Премия, ₽</span><input class="in" id="f-bonus" inputmode="numeric" autocomplete="off" placeholder="0"></label>
+            <label class="field" for="f-fine"><span>Штраф, ₽</span><input class="in" id="f-fine" inputmode="numeric" autocomplete="off" placeholder="0"></label>
+          </div>
+          <label class="field" for="f-paid"><span>Зарплата (расчёт) пришла в этот день, ₽</span><input class="in" id="f-paid" inputmode="numeric" autocomplete="off" placeholder="0"></label>
+          <label class="field" for="f-fixed"><span>Фикс. сумма за смену, ₽ — вместо расчёта</span><input class="in" id="f-fixed" inputmode="numeric" autocomplete="off" placeholder="например, 7600"></label>
+          <label class="field" for="f-note"><span>Заметка</span><input class="in" id="f-note" autocomplete="off" maxlength="120" placeholder="например, ночная, другой участок"></label>
+        </div>
+      </details>
+      <div class="preview"><div class="formula" id="f-formula"></div><div class="res" id="f-res">—</div></div>
+      <div class="err" id="f-err" hidden></div>
+      <div class="actions">
+        <button class="btn pri" type="submit" id="f-save">Сохранить смену</button>
+        <button class="btn danger" type="button" id="f-del" hidden>Удалить</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ===== Шторка: анкета первого запуска ===== -->
+<div class="ovl full" id="sh-wizard" hidden>
+  <div class="sheet" role="dialog" aria-labelledby="w-title">
+    <div class="sheet-h"><h2 class="sheet-t" id="w-title">Настрой под себя</h2><span class="hint" id="w-stepno">Шаг 1 из 3</span></div>
+    <div class="sheet-b">
       <div class="wstep" data-step="1">
         <p class="w-text">Где работаешь? Ставки компании подставятся сами, тариф можно поправить.</p>
         <label class="field" for="w-company"><span>Компания</span><select class="in" id="w-company"></select></label>
@@ -333,205 +678,68 @@ textarea.csv { width: 100%; height: 120px; font: 12px/1.4 var(--f-data); backgro
         </div>
       </div>
       <div class="actions">
-        <button class="btn ghost" type="button" id="w-back" hidden>Назад</button>
-        <button class="btn primary" type="button" id="w-next">Далее</button>
+        <button class="btn" type="button" id="w-back" hidden>Назад</button>
+        <button class="btn pri" type="button" id="w-next">Далее</button>
       </div>
-    </section>
-
-    <section class="card" id="entry" aria-labelledby="f-title">
-      <div class="form-head">
-        <h2 id="f-title">Новая смена</h2>
-        <span class="hint" id="f-hint"></span>
-      </div>
-      <form id="f" novalidate>
-        <div style="display:flex;flex-direction:column;gap:14px">
-          <div class="date-row">
-            <label class="field" for="f-date"><span>Дата</span><input class="in" type="date" id="f-date" required></label>
-            <div class="wdname" id="f-wd" aria-hidden="true"></div>
-          </div>
-          <div class="seg" role="group" aria-label="Тип дня" id="f-kind">
-            <button type="button" data-kind="work" aria-pressed="true">Смена</button>
-            <button type="button" data-kind="off" aria-pressed="false">Выходной</button>
-            <button type="button" data-kind="sick" aria-pressed="false">Больничный</button>
-          </div>
-          <div id="work-fields" style="display:flex;flex-direction:column;gap:12px">
-            <div class="field"><span class="flabel">Процесс</span>
-              <div class="chips" id="f-proc" role="group" aria-label="Процесс"></div>
-            </div>
-            <div class="field" id="f-role-f" hidden><span class="flabel">Роль в смене</span><div class="chips" id="f-role" role="group" aria-label="Роль"></div></div>
-            <p class="fixnote" id="f-fixnote" hidden></p>
-            <label class="field" for="f-pct" id="f-pct-f"><span id="f-pct-l">Выработка за смену</span>
-              <span class="pct-wrap"><input class="in" id="f-pct" inputmode="decimal" autocomplete="off" placeholder="100"></span>
-            </label>
-          </div>
-          <label class="field" for="f-adv"><span>Аванс в этот день, ₽</span>
-            <input class="in" id="f-adv" inputmode="numeric" autocomplete="off" placeholder="0">
-          </label>
-          <details class="more" id="f-more">
-            <summary>Премия, штраф, зарплата, заметка</summary>
-            <div class="more-in">
-              <div class="row2">
-                <label class="field" for="f-bonus"><span>Премия, ₽</span><input class="in" id="f-bonus" inputmode="numeric" autocomplete="off" placeholder="0"></label>
-                <label class="field" for="f-fine"><span>Штраф, ₽</span><input class="in" id="f-fine" inputmode="numeric" autocomplete="off" placeholder="0"></label>
-              </div>
-              <label class="field" for="f-paid"><span>Зарплата (расчёт) пришла в этот день, ₽</span><input class="in" id="f-paid" inputmode="numeric" autocomplete="off" placeholder="0"></label>
-              <label class="field" for="f-fixed"><span>Фикс. сумма за смену, ₽ — вместо расчёта</span><input class="in" id="f-fixed" inputmode="numeric" autocomplete="off" placeholder="например, 7600"></label>
-              <label class="field" for="f-note"><span>Заметка</span><input class="in" id="f-note" autocomplete="off" maxlength="120" placeholder="например, ночная, другой участок"></label>
-            </div>
-          </details>
-          <div class="preview">
-            <div class="formula" id="f-formula"></div>
-            <div class="res" id="f-res">—</div>
-          </div>
-          <div class="err" id="f-err" hidden></div>
-          <div class="actions">
-            <button class="btn primary" type="submit" id="f-save">Сохранить смену</button>
-            <button class="btn danger" type="button" id="f-del" hidden>Удалить</button>
-            <button class="btn ghost" type="button" id="f-new" hidden>Новая</button>
-          </div>
-        </div>
-      </form>
-    </section>
-  </div>
-
-  <!-- ========== ЖУРНАЛ ========== -->
-  <div class="view" data-view="log" id="v-log" hidden>
-    <div class="view-head"><h2 class="view-title">Журнал</h2><p>Нажми на строку, чтобы исправить запись.</p></div>
-    <div class="log" id="log"></div>
-    <div class="tools">
-      <button class="btn small ghost" type="button" id="csv-btn">Скопировать для Excel</button>
     </div>
-    <textarea class="csv" id="csv-box" readonly hidden aria-label="Данные для Excel"></textarea>
-    <details class="more" id="imp">
-      <summary>Перенести смены из таблицы</summary>
-      <div class="more-in">
-        <p class="hint">Вставь строки, скопированные кнопкой «Скопировать для Excel» (из этого бота или из калькулятора) или прямо из Excel. Записи с теми же датами заменятся.</p>
-        <textarea class="csv" id="imp-text" aria-label="Строки для переноса" placeholder="24.10.2026;сб;Смена;Отбор;1,13;;;;;9718;15000;;"></textarea>
-        <div><button class="btn small" type="button" id="imp-btn">Перенести</button></div>
-      </div>
-    </details>
   </div>
+</div>
 
-  <!-- ========== ДЕНЬГИ ========== -->
-  <div class="view" data-view="money" id="v-money" hidden>
-    <div class="view-head"><h2 class="view-title">Деньги</h2><p id="money-sub">Сколько заработано, сколько пришло и сколько ещё должны.</p></div>
-
-    <section class="sec" aria-labelledby="s-recon">
-      <h2 id="s-recon">Сверка выплат</h2>
-      <div class="verdict due" id="rc-verdict"><span class="vk">Ещё должны</span><span class="vv">—</span></div>
-      <dl class="kv" id="rc-kv"></dl>
-      <p class="hint">Авансы вноси в поле «Аванс» в смене того дня, когда пришли деньги. Зарплату по итогам вахты — в «Премия, штраф, зарплата» → «Зарплата (расчёт)».</p>
-    </section>
-
-    <section class="sec" aria-labelledby="s-goal">
-      <h2 id="s-goal">Цель на вахту</h2>
-      <label class="field" for="g-goal"><span>Хочу получить на руки к концу вахты, ₽</span>
-        <input class="in" id="g-goal" inputmode="numeric" autocomplete="off" placeholder="например, 300000">
-      </label>
-      <div id="g-out" hidden style="display:flex;flex-direction:column;gap:10px">
-        <div class="mbar" aria-hidden="true"><span class="f" id="g-bar"></span></div>
-        <p class="goal-line" id="g-line"></p>
-      </div>
-    </section>
-
-    <section class="sec" aria-labelledby="s-sum">
-      <h2 id="s-sum">Итог вахты</h2>
-      <div class="tbl-wrap"><table class="sum">
-        <thead><tr><th></th><th>Сейчас</th><th id="t-end-h">К концу</th></tr></thead>
-        <tbody id="t-body"></tbody>
-      </table></div>
-      <div class="note" id="t-note"></div>
-    </section>
+<!-- ===== Шторка: стиль оформления ===== -->
+<div class="ovl" id="sh-style" hidden>
+  <div class="sheet" role="dialog" aria-labelledby="st-title">
+    <div class="sheet-h"><h2 class="sheet-t" id="st-title">Стиль оформления</h2><button type="button" class="sheet-x" data-close aria-label="Закрыть">×</button></div>
+    <div class="sheet-b">
+      <p class="w-text">Меняются значки, полосы и цвета. Смены и разделы остаются те же. Выбор сохраняется в облаке Telegram и виден на всех устройствах.</p>
+      <div id="st-cards" style="display:flex;flex-direction:column;gap:10px"></div>
+    </div>
   </div>
+</div>
 
-  <!-- ========== ПРОГНОЗ ========== -->
-  <div class="view" data-view="fc" id="v-fc" hidden>
-    <div class="view-head"><h2 class="view-title">Прогноз</h2><p>Как растёт заработок и сколько выйдет к концу вахты.</p></div>
-    <section class="sec" aria-labelledby="s-traj">
-      <h2 id="s-traj">Траектория заработка <span class="h-note">накопительно, ₽</span></h2>
-      <div class="legend" aria-hidden="true"><span><i></i>факт</span><span><i class="dash"></i>прогноз по среднему</span><span><i class="band"></i>±1σ (≈68%)</span></div>
-      <div class="chart" id="c-traj"></div>
-      <p class="fc-line" id="fc-line"></p>
-      <div class="scenario" id="fc-scen" hidden></div>
-      <details class="params" id="params">
-        <summary>Параметры прогноза</summary>
-        <div class="params-in">
-          <div class="field"><span class="flabel">Средний % для прогноза</span>
-            <div class="seg wrap-seg" role="group" aria-label="Средний процент" id="p-basis">
-              <button type="button" data-basis="all" aria-pressed="true">Вся вахта<small id="p-b-all">—</small></button>
-              <button type="button" data-basis="last10" aria-pressed="false">10 последних<small id="p-b-l10">—</small></button>
-              <button type="button" data-basis="manual" aria-pressed="false">Свой<small id="p-b-man">—</small></button>
-            </div>
-          </div>
-          <label class="field" for="p-manual" id="p-manual-f" hidden><span>Свой средний %</span><input class="in" id="p-manual" inputmode="decimal" autocomplete="off" placeholder="110"></label>
-          <label class="field" for="p-proc"><span>Процесс для прогноза</span><select class="in" id="p-proc"></select></label>
-          <div class="field"><span class="flabel">График</span><div class="seg wrap-seg" id="p-sched" role="group" aria-label="График"></div></div>
-          <div class="seg" id="p-stype" role="group" aria-label="Тип своего графика" hidden><button type="button" data-st="week" aria-pressed="true">По дням недели</button><button type="button" data-st="cycle" aria-pressed="false">Цикл «через»</button></div>
-          <div class="field" id="p-days-f" hidden><span class="flabel">Рабочие дни</span><div class="days" id="p-days" role="group" aria-label="Рабочие дни"></div></div>
-          <div class="row2" id="p-cyc-f" hidden>
-            <label class="field" for="p-con"><span>Работаю, дней</span><input class="in" id="p-con" inputmode="numeric" autocomplete="off"></label>
-            <label class="field" for="p-coff"><span>Отдыхаю, дней</span><input class="in" id="p-coff" inputmode="numeric" autocomplete="off"></label>
-          </div>
-          <label class="field" for="p-cstart" id="p-cstart-f" hidden><span>Первый день любого цикла смен</span><input class="in" type="date" id="p-cstart"></label>
-          <div class="row2">
-            <label class="field" for="p-att"><span>Явка, % смен графика</span><input class="in" id="p-att" inputmode="decimal" autocomplete="off"></label>
-            <label class="field" for="p-end"><span>Конец вахты</span><input class="in" type="date" id="p-end"></label>
-          </div>
-          <div class="row2">
-            <label class="field" for="p-adv"><span>Плановый аванс, ₽</span><input class="in" id="p-adv" inputmode="numeric" autocomplete="off"></label>
-            <label class="field" for="p-advday"><span>Каждый</span>
-              <select class="in" id="p-advday">
-                <option value="1">понедельник</option><option value="2">вторник</option><option value="3">среда</option>
-                <option value="4">четверг</option><option value="5">пятница</option><option value="6">суббота</option><option value="0">воскресенье</option>
-              </select>
-            </label>
-          </div>
-          <p class="hint">Прогноз: каждая смена графика × явка × тариф процесса × средний %. Коридор — разброс твоего % от смены к смене; риск пропусков в него не входит, его задаёт явка.</p>
-        </div>
-      </details>
-    </section>
-    <section class="sec" aria-labelledby="s-mon"><h2 id="s-mon">По месяцам</h2><div class="months" id="months"></div><p class="foot" id="mon-foot"></p></section>
-    <section class="sec" aria-labelledby="s-procstat"><h2 id="s-procstat">По процессам</h2><div class="tbl-wrap" id="procs"></div></section>
-    <section class="sec" aria-labelledby="s-pct">
-      <h2 id="s-pct">Выработка по сменам <span class="h-note" id="pct-note"></span></h2>
-      <div class="legend" aria-hidden="true"><span><i class="bar"></i>% за смену</span><span><i class="dash"></i>средний %</span></div>
-      <div class="chart" id="c-pct"></div>
-    </section>
-  </div>
-
-  <!-- ========== НАСТРОЙКИ ========== -->
-  <div class="view" data-view="set" id="v-set" hidden>
-    <div class="view-head"><h2 class="view-title">Настройки</h2><p>Компания, роли, тарифы по процессам, налоги.</p></div>
-    <section class="sec" aria-labelledby="s-comp">
-      <h2 id="s-comp">Компания</h2>
+<!-- ===== Шторка: компания и роли ===== -->
+<div class="ovl" id="sh-company" hidden>
+  <div class="sheet" role="dialog" aria-labelledby="co-title">
+    <div class="sheet-h"><h2 class="sheet-t" id="co-title">Компания и роли</h2><button type="button" class="sheet-x" data-close aria-label="Закрыть">×</button></div>
+    <div class="sheet-b">
       <label class="field" for="s-company"><span>Через кого работаешь</span><select class="in" id="s-company"></select></label>
       <div class="row2">
         <label class="field" for="s-cname" id="s-cname-f"><span>Название</span><input class="in" id="s-cname" autocomplete="off" maxlength="80" placeholder="ООО «…»"></label>
         <label class="field" for="s-inn"><span>ИНН, если знаешь</span><input class="in" id="s-inn" inputmode="numeric" autocomplete="off" maxlength="12" placeholder="10 или 12 цифр"></label>
       </div>
-    </section>
-    <section class="sec" aria-labelledby="s-procset">
-      <h2 id="s-procset">Процессы и тарифы <span class="h-note">пусто — основной тариф</span></h2>
-      <div class="proc-list" id="s-procs"></div>
-      <p class="hint">«%» — оплата по выработке: тариф × процент. «Фикс» — одна сумма за смену, процент не нужен.</p>
-    </section>
-    <section class="sec" aria-labelledby="s-roles">
-      <h2 id="s-roles">Мои роли</h2>
-      <div class="proc-list">
-        <div class="role-row"><span class="pn">Сотрудник</span><span class="hint">всегда</span></div>
-        <div class="role-row" data-role="zam">
-          <label class="chip" for="r-zam-on"><input type="checkbox" id="r-zam-on"> ЗамБриг</label>
-          <label class="field" for="r-zam-fix"><span>Фикс за смену, ₽</span><input class="in" id="r-zam-fix" inputmode="numeric" autocomplete="off"></label>
+      <div class="field"><span class="flabel">Мои роли</span>
+        <div class="proc-list">
+          <div class="role-row"><span class="pn">Сотрудник</span><span class="hint">всегда</span></div>
+          <div class="role-row" data-role="zam">
+            <label class="chip" for="r-zam-on"><input type="checkbox" id="r-zam-on"> ЗамБриг</label>
+            <label class="field" for="r-zam-fix"><span>Фикс за смену, ₽</span><input class="in" id="r-zam-fix" inputmode="numeric" autocomplete="off"></label>
+          </div>
+          <div class="role-row" data-role="brig">
+            <label class="chip" for="r-brig-on"><input type="checkbox" id="r-brig-on"> Бригадир</label>
+            <label class="field" for="r-brig-fix"><span>Фикс за смену, ₽</span><input class="in" id="r-brig-fix" inputmode="numeric" autocomplete="off"></label>
+          </div>
         </div>
-        <div class="role-row" data-role="brig">
-          <label class="chip" for="r-brig-on"><input type="checkbox" id="r-brig-on"> Бригадир</label>
-          <label class="field" for="r-brig-fix"><span>Фикс за смену, ₽</span><input class="in" id="r-brig-fix" inputmode="numeric" autocomplete="off"></label>
-        </div>
+        <span class="hint">Включённые роли появятся в форме смены. Оплата смены в роли: фикс + выработка сверху, если была.</span>
       </div>
-      <p class="hint">Включённые роли появятся в форме смены. Оплата смены в роли: фикс + выработка сверху, если была.</p>
-    </section>
-    <section class="sec" aria-labelledby="s-set">
-      <h2 id="s-set">Ставки</h2>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Шторка: процессы ===== -->
+<div class="ovl" id="sh-procs" hidden>
+  <div class="sheet" role="dialog" aria-labelledby="pr-title">
+    <div class="sheet-h"><h2 class="sheet-t" id="pr-title">Процессы и тарифы</h2><button type="button" class="sheet-x" data-close aria-label="Закрыть">×</button></div>
+    <div class="sheet-b">
+      <p class="w-text">Пустое поле — основной тариф. «%» — тариф × выработка. «Фикс» — одна сумма за смену, процент не нужен.</p>
+      <div class="proc-list" id="s-procs"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Шторка: ставки ===== -->
+<div class="ovl" id="sh-rates" hidden>
+  <div class="sheet" role="dialog" aria-labelledby="ra-title">
+    <div class="sheet-h"><h2 class="sheet-t" id="ra-title">Ставки и налоги</h2><button type="button" class="sheet-x" data-close aria-label="Закрыть">×</button></div>
+    <div class="sheet-b">
       <label class="field" for="s-tariff"><span>Основной тариф (100%), ₽</span><input class="in" id="s-tariff" inputmode="numeric" autocomplete="off"></label>
       <div class="row2">
         <label class="field" for="s-tax"><span>Налог, %</span><input class="in" id="s-tax" inputmode="decimal" autocomplete="off"></label>
@@ -543,20 +751,55 @@ textarea.csv { width: 100%; height: 120px; font: 12px/1.4 var(--f-data); backgro
           <button type="button" data-mode="all" aria-pressed="false">Со всей выработки</button>
         </div>
       </div>
-    </section>
-    <div class="status" id="status"><span class="dot"></span><span>Загружаю смены…</span></div>
+    </div>
   </div>
-</main>
+</div>
 
-<nav class="tabbar" aria-label="Разделы">
-  <div class="tabbar-in">
-    <button type="button" data-tab="shift" aria-current="page"><span class="tb-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1M12 10v6M9 13h6"/></svg></span>Смена</button>
-    <button type="button" data-tab="log"><span class="tb-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h12M8 12h12M8 18h12"/><circle cx="4" cy="6" r="1"/><circle cx="4" cy="12" r="1"/><circle cx="4" cy="18" r="1"/></svg></span>Журнал</button>
-    <button type="button" data-tab="money"><span class="tb-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18M16 15h2"/></svg></span>Деньги</button>
-    <button type="button" data-tab="fc"><span class="tb-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19h16M5 16l5-5 3 3 6-7"/><path d="M15 7h4v4"/></svg></span>Прогноз</button>
-    <button type="button" data-tab="set"><span class="tb-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg></span>Настройки</button>
+<!-- ===== Шторка: данные ===== -->
+<div class="ovl" id="sh-data" hidden>
+  <div class="sheet" role="dialog" aria-labelledby="da-title">
+    <div class="sheet-h"><h2 class="sheet-t" id="da-title">Выгрузка и перенос</h2><button type="button" class="sheet-x" data-close aria-label="Закрыть">×</button></div>
+    <div class="sheet-b">
+      <p class="w-text">Все смены одной таблицей: вставь в Excel или отправь бригадиру.</p>
+      <button class="btn wide" type="button" id="csv-btn">Скопировать для Excel</button>
+      <textarea class="csv" id="csv-box" readonly hidden aria-label="Данные для Excel"></textarea>
+      <div class="field"><span class="flabel">Перенести смены из таблицы</span>
+        <span class="hint">Вставь строки, скопированные кнопкой выше (из этого бота или калькулятора), или прямо из Excel. Записи с теми же датами заменятся.</span>
+        <textarea class="csv" id="imp-text" aria-label="Строки для переноса" placeholder="24.10.2026;сб;Смена;Отбор;1,13;;;;;9718;15000;;"></textarea>
+      </div>
+      <button class="btn pri wide" type="button" id="imp-btn">Перенести</button>
+    </div>
   </div>
-</nav>
+</div>
+
+<!-- ===== Шторка: вопросы ===== -->
+<div class="ovl" id="sh-faq" hidden>
+  <div class="sheet" role="dialog" aria-labelledby="fq-title">
+    <div class="sheet-h"><h2 class="sheet-t" id="fq-title">Вопросы и ответы</h2><button type="button" class="sheet-x" data-close aria-label="Закрыть">×</button></div>
+    <div class="sheet-b faq" id="faq"></div>
+  </div>
+</div>
+
+<!-- ===== Шторка: значок ===== -->
+<div class="ovl" id="sh-badge" hidden>
+  <div class="sheet" role="dialog" aria-labelledby="bd-title">
+    <div class="sheet-h"><h2 class="sheet-t" id="bd-title">Значок</h2><button type="button" class="sheet-x" data-close aria-label="Закрыть">×</button></div>
+    <div class="sheet-b" id="bd-body"></div>
+  </div>
+</div>
+
+<!-- ===== Истории ===== -->
+<div class="slides" id="slides" hidden role="dialog" aria-modal="true" aria-labelledby="sl-t">
+  <div class="sl-top"><div class="cells" id="sl-cells"></div><button type="button" class="sheet-x" id="sl-x" aria-label="Закрыть">×</button></div>
+  <div class="sl-body">
+    <div class="sl-art" id="sl-art"></div>
+    <span class="sl-k" id="sl-k"></span>
+    <h2 class="sl-t" id="sl-t"></h2>
+    <p class="sl-d" id="sl-d"></p>
+  </div>
+  <div class="sl-nav"><button type="button" class="btn" id="sl-prev">Назад</button><button type="button" class="btn pri" id="sl-next">Дальше</button></div>
+</div>
+
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
@@ -822,6 +1065,292 @@ if (typeof module !== "undefined") module.exports = { PROCS, COMPANIES, ROLES, S
 
 </script>
 <script>
+/* ===== Игра: всё считается из записей, ничего отдельно не хранится ===== */
+const PTS = { shift: 10, over: 5, record: 20 };
+const CHALLENGES = [
+  { id: "over3", title: "Смены от 100%", text: n => `${n} ${n === 1 ? "смена" : n < 5 ? "смены" : "смен"} от 100%`, reward: 60 },
+  { id: "all", title: "Все смены по графику", text: n => `Внести все ${n} ${n === 1 ? "смену" : n < 5 ? "смены" : "смен"} по графику`, reward: 50 },
+  { id: "top120", title: "Смена от 120%", text: () => "Одна смена от 120%", reward: 80 },
+  { id: "beat", title: "Лучше прошлой недели", text: () => "Средний % выше, чем на прошлой неделе", reward: 70 },
+  { id: "four", title: "Плотная неделя", text: n => `${n} ${n === 1 ? "смена" : n < 5 ? "смены" : "смен"} за неделю`, reward: 50 }
+];
+const BADGES = [
+  { id: "first", name: "Первая смена", how: "Внести первую смену", px: "helmet", emo: "⛑️" },
+  { id: "s10", name: "10 смен", how: "Внести 10 смен", px: "box", emo: "📦" },
+  { id: "s50", name: "50 смен", how: "Внести 50 смен", px: "cal", emo: "📅" },
+  { id: "run5", name: "Пять от 100%", how: "Пять смен подряд от 100%", px: "bolt", emo: "🔥" },
+  { id: "p150", name: "Смена от 150%", how: "Сделать смену от 150%", px: "star", emo: "🚀" },
+  { id: "streak4", name: "Месяц без пропусков", how: "Вести журнал 4 недели подряд", px: "flag", emo: "🗓️" },
+  { id: "procs3", name: "Мастер на все руки", how: "Поработать на трёх процессах", px: "trophy", emo: "🧰" },
+  { id: "recon", name: "Всё сверено", how: "Внести зарплату так, чтобы сверка сошлась", px: "check", emo: "✅" }
+];
+
+function mondayOf(n) { return n - ((weekday(n) + 6) % 7); }
+function levelOf(pts) {
+  let L = 1;
+  while (50 * (L + 1) * L <= pts) L++;
+  const from = 50 * L * (L - 1), to = 50 * (L + 1) * L;
+  return { L, from, to, share: (pts - from) / (to - from) };
+}
+function moodOf(avg) {
+  if (avg == null) return "ok";
+  if (avg >= 1.15) return "wow";
+  if (avg >= 1.0) return "good";
+  if (avg >= 0.9) return "ok";
+  if (avg >= 0.75) return "meh";
+  return "sad";
+}
+function schedCount(cfg, mon) { let n = 0; for (let d = mon; d < mon + 7; d++) if (isWorkday(cfg, d)) n++; return n; }
+
+function weekChallenge(cfg, mon, weekRecs, prevRecs) {
+  const t = CHALLENGES[((Math.floor(mon / 7) % CHALLENGES.length) + CHALLENGES.length) % CHALLENGES.length];
+  const work = weekRecs.filter(isWork);
+  const pcts = weekRecs.filter(r => isPctShift(r, cfg)).map(r => r.pct);
+  const sched = Math.max(1, schedCount(cfg, mon));
+  let need = 1, val = 0;
+  if (t.id === "over3") { need = Math.min(3, sched); val = pcts.filter(p => p >= 1).length; }
+  else if (t.id === "all") { need = sched; val = work.length; }
+  else if (t.id === "top120") { need = 1; val = pcts.some(p => p >= 1.2) ? 1 : 0; }
+  else if (t.id === "four") { need = Math.min(4, sched); val = work.length; }
+  else if (t.id === "beat") {
+    const prev = prevRecs.filter(r => isPctShift(r, cfg)).map(r => r.pct);
+    const a = stats(pcts).mean, b = stats(prev).mean;
+    need = 1; val = pcts.length >= 2 && b != null && a > b ? 1 : 0;
+  }
+  return { id: t.id, title: t.title, text: t.text(need), reward: t.reward, need, val: Math.min(val, need), done: val >= need, mon };
+}
+
+function gameOf(R) {
+  const cfg = R.cfg, recs = R.recs, today = R.today;
+  const work = recs.filter(isWork);
+  let pts = 0, best = null, records = 0, run = 0, maxRun = 0;
+  const log = [];
+  for (const r of recs) {
+    if (!isWork(r)) continue;
+    pts += PTS.shift;
+    if (isPctShift(r, cfg)) {
+      if (r.pct >= 1) { pts += PTS.over; run++; maxRun = Math.max(maxRun, run); } else run = 0;
+      if (best != null && r.pct > best) { pts += PTS.record; records++; log.push({ date: r.date, pct: r.pct }); }
+      best = best == null ? r.pct : Math.max(best, r.pct);
+    }
+  }
+  // недели
+  const byWeek = new Map();
+  for (const r of recs) { const m = mondayOf(dnum(r.date)); if (!byWeek.has(m)) byWeek.set(m, []); byWeek.get(m).push(r); }
+  const curMon = mondayOf(today);
+  const weeks = [];
+  if (recs.length) {
+    const first = mondayOf(dnum(recs[0].date));
+    for (let m = first; m <= curMon; m += 7) {
+      const ch = weekChallenge(cfg, m, byWeek.get(m) || [], byWeek.get(m - 7) || []);
+      ch.has = (byWeek.get(m) || []).length > 0;
+      weeks.push(ch);
+      if (ch.done) pts += ch.reward;
+    }
+  }
+  const current = weekChallenge(cfg, curMon, byWeek.get(curMon) || [], byWeek.get(curMon - 7) || []);
+  current.has = byWeek.has(curMon);
+  // серия: недели подряд с записями; текущая неделя без записей серию ещё не рвёт
+  let streak = 0;
+  for (let m = byWeek.has(curMon) ? curMon : curMon - 7; byWeek.has(m); m -= 7) streak++;
+  let maxStreak = 0, cur = 0, prevM = null;
+  [...byWeek.keys()].sort((a, b) => a - b).forEach(m => { cur = prevM != null && m - prevM === 7 ? cur + 1 : 1; maxStreak = Math.max(maxStreak, cur); prevM = m; });
+  // значки
+  const procs = new Set(work.map(r => r.proc).filter(Boolean));
+  const got = {
+    first: work.length >= 1, s10: work.length >= 10, s50: work.length >= 50, run5: maxRun >= 5,
+    p150: recs.some(r => isPctShift(r, cfg) && r.pct >= 1.5), streak4: maxStreak >= 4, procs3: procs.size >= 3,
+    recon: R.recon.paid > 0 && Math.abs(R.recon.diff) < 1
+  };
+  // настроение по месяцам
+  const moods = R.months.filter(m => m.fS > 0 || m.pcts.length).map(m => ({ key: m.key, avg: m.avgPct, mood: moodOf(m.avgPct), shifts: m.fS }));
+  return {
+    pts, level: levelOf(pts), best, records, recordLog: log, streak, maxStreak, maxRun,
+    current, weeks, doneWeeks: weeks.filter(w => w.done).length,
+    badges: BADGES.map(b => Object.assign({}, b, { got: !!got[b.id] })), moods
+  };
+}
+
+if (typeof module !== "undefined") module.exports = { gameOf, levelOf, moodOf, mondayOf, CHALLENGES, BADGES, PTS };
+
+</script>
+<script>
+/* ===== Пиксельная графика семейства: иконки 10×10, талисман 12×12 + каска ===== */
+const PX = {
+  cal: ["..#....#..", "##########", "#........#", "##########", "#........#", "#.##.##..#", "#........#", "#.##.##..#", "#........#", "##########"],
+  chart: ["........##", "........##", "........##", "....##..##", "....##..##", "....##..##", "##..##..##", "##..##..##", "##..##..##", "##########"],
+  coin: ["..######..", ".#......#.", "#..####..#", "#..#...#.#", "#..####..#", "#.#####..#", "#..#.....#", "#..#.....#", ".#......#.", "..######.."],
+  trophy: [".########.", "##.####.##", "#..####..#", "##.####.##", "..######..", "...####...", "....##....", "....##....", "..######..", "..######.."],
+  dots: ["..........", "..........", "..........", "..........", "##..##..##", "##..##..##", "..........", "..........", "..........", ".........."],
+  bolt: ["......###.", ".....###..", "....###...", "...###....", "..#######.", ".#######..", "....###...", "...###....", "..###.....", ".##......."],
+  star: ["....##....", "....##....", "...####...", "##########", ".########.", "..######..", "..######..", ".###..###.", ".##....##.", "##......##"],
+  flag: ["##........", "########..", "#########.", "#########.", "########..", "##........", "##........", "##........", "##........", "##........"],
+  check: [".........#", "........##", ".......##.", "......##..", "#....##...", "##..##....", ".####.....", "..##......", "..........", ".........."],
+  helmet: ["..........", "...####...", "..######..", ".##.##.##.", ".##.##.##.", ".########.", "##########", "##########", "..........", ".........."],
+  box: ["..........", ".########.", "#...##...#", "##########", "#...##...#", "#........#", "#........#", "#........#", "##########", ".........."],
+  play: ["##........", "####......", "######....", "########..", "##########", "##########", "########..", "######....", "####......", "##........"],
+  qmark: ["..######..", ".##....##.", ".##....##.", "......##..", ".....##...", "....##....", "....##....", "..........", "....##....", "....##...."],
+  palette: ["..######..", ".#......#.", "#.##..##.#", "#.##..##.#", "#........#", "#.##.....#", "#.##..####", "#.....#...", ".#...#....", "..###....."],
+  gear: ["....##....", ".#.####.#.", "..######..", ".###..###.", "####..####", "####..####", ".###..###.", "..######..", ".#.####.#.", "....##...."],
+  people: ["..##...##.", ".####.####", ".####.####", "..##...##.", "..........", ".####.####", "##########", "##########", "##########", ".........."],
+  list: ["##.#######", "##.#######", "..........", "##.#######", "##.#######", "..........", "##.#######", "##.#######", "..........", ".........."],
+  plus: ["....##....", "....##....", "....##....", "....##....", "##########", "##########", "....##....", "....##....", "....##....", "....##...."],
+  gift: ["..##..##..", "...####...", "##########", "##########", "#...##...#", "#...##...#", "#...##...#", "#...##...#", "##########", ".........."],
+  swap: ["......#...", "......##..", "#########.", "......##..", "......#...", "...#......", "..##......", ".#########", "..##......", "...#......"],
+  lock: ["...####...", "..#....#..", "..#....#..", "##########", "##########", "####..####", "####..####", "#####.####", "##########", ".........."],
+  build: ["...####...", "...#..#...", "...####...", "#########.", "#.#.#.#.#.", "#########.", "#.#.#.#.#.", "#########.", "#.#.#.#.#.", "#########."]
+};
+function pxSvg(name, size) {
+  const g = PX[name] || PX.dots, h = g.length, w = g[0].length;
+  let r = "";
+  for (let y = 0; y < h; y++) {
+    let x = 0;
+    while (x < w) {
+      if (g[y][x] !== "#") { x++; continue; }
+      let e = x; while (e < w && g[y][e] === "#") e++;
+      r += `<rect x="${x}" y="${y}" width="${e - x}" height="1.02"/>`;
+      x = e;
+    }
+  }
+  return `<svg class="pxi" viewBox="0 0 ${w} ${h}" width="${size}" height="${size}" fill="currentColor" shape-rendering="crispEdges" aria-hidden="true">${r}</svg>`;
+}
+/* линейные значки 24×24, прямые концы — для сбалансированного и классического стилей */
+const LN = {
+  cal: '<rect x="4" y="5" width="16" height="15"/><path d="M4 10h16M9 3v4M15 3v4"/>',
+  chart: '<path d="M5 20v-8M12 20V4M19 20v-6"/>',
+  coin: '<circle cx="12" cy="12" r="8"/><path d="M10 7.5h3a2.2 2.2 0 0 1 0 4.4h-3zM10 7.5v9M8.5 14.5h4.5"/>',
+  trophy: '<path d="M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M12 14v4M8 20h8M7 6H4v1a3 3 0 0 0 3 3M17 6h3v1a3 3 0 0 1-3 3"/>',
+  dots: '<path d="M5 12h1M11.5 12h1M18 12h1"/>',
+  bolt: '<path d="M13 3 5 14h6l-1 7 8-11h-6z"/>',
+  star: '<path d="m12 3 2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.6 6.6 19.5l1.2-6L3.3 9.3l6.1-.7z"/>',
+  flag: '<path d="M5 21V4M5 4h11l-2 4 2 4H5"/>',
+  check: '<path d="m4 12 5 5L20 6"/>',
+  helmet: '<path d="M4 16a8 8 0 0 1 16 0M2 16h20v3H2zM10 8V5h4v3"/>',
+  box: '<path d="M3 7h18v13H3zM3 7l2-3h14l2 3M10 11h4"/>',
+  play: '<path d="M7 4v16l13-8z"/>',
+  qmark: '<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 .9-1 1.7M12 17h.01"/>',
+  palette: '<path d="M12 3a9 9 0 1 0 0 18c1.2 0 1.6-1 1-2-.7-1.2.1-2.6 1.5-2.6H17a4 4 0 0 0 4-4c0-5-4-9.4-9-9.4z"/><path d="M7.5 11h.01M10 7h.01M14.5 7h.01"/>',
+  gear: '<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/>',
+  people: '<circle cx="9" cy="8" r="3.2"/><path d="M3 20a6 6 0 0 1 12 0M16 4.5a3.2 3.2 0 0 1 0 6.4M18 14a6 6 0 0 1 3 6"/>',
+  list: '<path d="M9 6h12M9 12h12M9 18h12M4 6h1M4 12h1M4 18h1"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  gift: '<path d="M3 9h18v4H3zM5 13v8h14v-8M12 9v12M12 9C9 9 7.5 4 10 4s2 5 2 5 0-5 2-5 1 5-2 5"/>',
+  swap: '<path d="M4 8h15l-4-4M20 16H5l4 4"/>',
+  lock: '<rect x="4" y="11" width="16" height="10"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
+  build: '<path d="M4 21V9h16v12M8 9V4h8v5M8 13h2M14 13h2M8 17h2M14 17h2"/>'
+};
+function lnSvg(name, size) {
+  return `<svg class="lni" viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter" aria-hidden="true">${LN[name] || LN.dots}</svg>`;
+}
+/* талисман: пять настроений (общие для семейства), у Вахты — оранжевая каска */
+const FACE = {
+  good: ["....KKKK....", "..KKBBBBKK..", ".KBBBBBBBBK.", ".KBBBBBBBBK.", "KBBKBBBBKBBK", "KBBKBBBBKBBK", "KBPBBBBBBPBK", "KBBKBBBBKBBK", ".KBBKKKKBBK.", ".KBBBBBBBBK.", "..KKBBBBKK..", "....KKKK...."],
+  sad: ["....KKKK....", "..KKBBBBKK..", ".KBBBBBBBBK.", ".KBBBBBBBBK.", "KBBKBBBBKBBK", "KBBKBBBBKBBK", "KBBTBBBBTBBK", "KBBTBBBBTBBK", ".KBBKKKKBBK.", ".KBKBBBBKBK.", "..KKBBBBKK..", "....KKKK...."],
+  meh: ["....KKKK....", "..KKBBBBKK..", ".KBKBBBBKBK.", ".KKBBBBBBKK.", "KBBKBBBBKBBK", "KBBKBBBBKBBK", "KBBBBBBBBBBK", "KBBBKKKKBBBK", ".KBKBBBBKBK.", ".KBBBBBBBBK.", "..KKBBBBKK..", "....KKKK...."],
+  ok: ["....KKKK....", "..KKBBBBKK..", ".KBBBBBBBBK.", ".KBBBBBBBBK.", "KBBKBBBBKBBK", "KBBKBBBBKBBK", "KBBBBBBBBBBK", "KBBBBBBBBBBK", ".KBBKKKKBBK.", ".KBBBBBBBBK.", "..KKBBBBKK..", "....KKKK...."],
+  wow: ["....KKKK....", "..KKBBBBKK..", ".KBBBBBBBBK.", ".KBBBBBBBBK.", "KBBKBBBBKBBK", "KBKBKBBKBKBK", "KBPBBBBBBPBK", "KBBKKKKKKBBK", ".KBKRRRRKBK.", ".KBBKKKKBBK.", "..KKBBBBKK..", "....KKKK...."]
+};
+const FACE_C = { wow: "#5DD39E", good: "#B5DC5B", ok: "#F7D154", meh: "#F6AE5B", sad: "#F28B82" };
+const MOOD_EMO = { wow: "🤩", good: "😊", ok: "🙂", meh: "😕", sad: "😢" };
+const MOOD_TXT = { wow: "Огонь", good: "Хорошо", ok: "Ровно", meh: "Так себе", sad: "Тяжело" };
+const HAT = ["...HHHHHH...", "..HHHHHHHH..", ".HHHHHHHHHH.", "DDDDDDDDDDDD"];
+function mascotSvg(mood, size, hat) {
+  const face = FACE[mood] || FACE.ok;
+  const g = (hat === false ? [] : HAT).concat(hat === false ? face : face.slice(1));
+  const C = { K: "#14161A", B: FACE_C[mood] || FACE_C.ok, P: "#FF8FA3", T: "#4DA8F0", R: "#D9434B", H: "var(--accent)", D: "var(--acc-deep)" };
+  let r = "";
+  g.forEach((row, y) => { for (let x = 0; x < row.length; x++) { const c = C[row[x]]; if (c) r += `<rect x="${x}" y="${y}" width="1.02" height="1.02" fill="${c}"/>`; } });
+  const h = g.length;
+  return `<svg class="mascot" viewBox="0 0 12 ${h}" width="${size}" height="${Math.round(size * h / 12)}" shape-rendering="crispEdges" aria-hidden="true">${r}</svg>`;
+}
+
+/* ===== Обучение: истории, подсказки по разделам, вопросы и ответы ===== */
+const VERSION = "0.4";
+const STORIES = [
+  { id: "start", label: "Начало", ic: "play", slides: [
+    { mascot: "good", k: "Вахтовый помощник", t: "Журнал твоей вахты", d: "После смены вносишь выработку, а помощник считает: сколько заработал, сколько получишь на руки и сколько выйдет к концу вахты." },
+    { ic: "cal", t: "Одна главная цифра", d: "На «Сменах» крупно показана выработка последней смены. Ниже — цель вахты, заработок и сколько ещё должны." },
+    { ic: "dots", t: "Пять разделов", d: "<b>Смены</b> — ввод и журнал. <b>Прогноз</b> — сколько выйдет. <b>Выплаты</b> — сверка денег. <b>Прогресс</b> — очки и значки. <b>Ещё</b> — настройки и обучение." }
+  ] },
+  { id: "shift", label: "Смена", ic: "plus", slides: [
+    { ic: "plus", t: "Как внести смену", d: "Нажми «+ Смена», выбери процесс и впиши процент, например 113. Сумма посчитается сразу, она видна внизу формы." },
+    { ic: "helmet", t: "Роли и фикс", d: "Если бываешь ЗамБригом или бригадиром, включи роль: «Ещё» → «Компания и роли». За смену в роли платится фикс, а выработка идёт сверху." },
+    { ic: "list", t: "Исправить или удалить", d: "Нажми на строку в журнале, и откроется та же форма. Смены можно вносить задним числом, а ещё отмечать выходные и больничные." }
+  ] },
+  { id: "fc", label: "Прогноз", ic: "chart", slides: [
+    { ic: "chart", t: "Прогноз по среднему", d: "Помощник берёт твой средний процент и график и считает, сколько выйдет к концу вахты. Полоса вокруг линии — обычный разброс твоих смен." },
+    { ic: "gear", t: "Параметры", d: "В «Параметрах прогноза» меняешь график (6/1, 5/2, 2/2, 3/3 или свой), явку, конец вахты и плановый аванс." }
+  ] },
+  { id: "pay", label: "Выплаты", ic: "coin", slides: [
+    { ic: "coin", t: "Сверка выплат", d: "Авансы и зарплату вноси в смене того дня, когда пришли деньги. Помощник покажет, сколько ещё должны за отработанное." },
+    { ic: "flag", t: "Цель вахты", d: "Поставь цель «на руки». На «Сменах» появится дорожка от старта до финиша, а помощник подскажет, какой процент нужен в среднем." }
+  ] },
+  { id: "game", label: "Прогресс", ic: "trophy", slides: [
+    { ic: "star", game: true, k: "Прогресс", t: "Очки и уровень", d: "<b>+10</b> за каждую внесённую смену, <b>+5</b> за смену от 100%, <b>+20</b> за новый личный рекорд. Из очков складывается уровень." },
+    { ic: "bolt", game: true, k: "Прогресс", t: "Вызов недели и серия", d: "Каждую неделю — новый вызов, за него дают очки. Серия — сколько недель подряд ты ведёшь журнал. Больничный серию не рвёт." },
+    { mascot: "wow", game: true, k: "Прогресс", t: "Талисман и значки", d: "Талисман в каске показывает, каким вышел месяц. За важные шаги дают значки. Нажми на значок, чтобы узнать, за что он." }
+  ] },
+  { id: "data", label: "Данные", ic: "lock", slides: [
+    { ic: "lock", t: "Где хранятся смены", d: "В облаке Telegram, в твоём аккаунте. Их видишь только ты, на телефоне и на компьютере. Своего сервера у помощника нет." },
+    { ic: "swap", t: "Excel и перенос", d: "«Ещё» → «Выгрузка и перенос»: скопируй все смены для Excel или бригадира либо перенеси смены из своей таблицы." }
+  ] },
+  { id: "news", label: "Что нового", ic: "gift", news: true, slides: [
+    { ic: "gift", game: true, k: "Что нового · 0.4", t: "Новый вид", d: "Помощник теперь в общем стиле семейства ботов: тёмный фон, крупные цифры и пиксельный талисман в каске." },
+    { ic: "dots", k: "Что нового · 0.4", t: "Новое меню", d: "Пять разделов: Смены, Прогноз, Выплаты, Прогресс и Ещё. Смена вносится кнопкой «+ Смена», журнал — на «Сменах»." },
+    { ic: "trophy", game: true, k: "Что нового · 0.4", t: "Прогресс", d: "Очки, уровни, серия недель, вызов недели и значки. Всё считается из твоих смен, ничего отдельно вносить не нужно." },
+    { ic: "palette", k: "Что нового · 0.4", t: "Стиль оформления", d: "Пиксельный, сбалансированный или классический. Выбрать — «Ещё» → «Стиль оформления»." },
+    { ic: "qmark", k: "Что нового · 0.4", t: "Обучение", d: "Истории вверху «Смен» и в «Ещё», подсказки с затемнением при первом входе в раздел, вопросы и ответы. Твои смены и настройки на месте." }
+  ] }
+];
+const TOURS = {
+  shifts: [
+    ["#h-hero", "Главная цифра", "Выработка последней смены и сколько она принесла."],
+    ["#goalcard", "Цель вахты", "Дорожка от старта до финиша: какая часть цели уже заработана."],
+    ["#h-stats", "Коротко о вахте", "Сколько заработано, сколько смен сделано из плана и сколько ещё должны."],
+    ["#add-btn", "Новая смена", "Жми после смены: процесс, процент — и готово."],
+    ["#challenge", "Вызов недели", "Задание на неделю. За выполнение дают очки в «Прогрессе»."],
+    ["#log", "Журнал", "Все записи по месяцам. Нажми на строку, чтобы исправить."],
+    ["#stories", "Истории", "Короткое обучение. Открой, если что-то непонятно."]
+  ],
+  fc: [
+    ["#fc-hero", "Прогноз", "Сколько выйдет к концу вахты по твоему среднему проценту."],
+    ["#c-traj", "Траектория", "Сплошная линия — факт, пунктир — прогноз, полоса — обычный разброс."],
+    ["#params", "Параметры", "График, явка, конец вахты и аванс. Всё это влияет на прогноз."],
+    ["#months", "По месяцам", "Сколько вышло и выйдет в каждом месяце, чистыми и с авансами."]
+  ],
+  pay: [
+    ["#pay-hero", "Сверка", "Сколько ещё должны за отработанное, с учётом авансов и зарплаты."],
+    ["#rc-card", "Из чего складывается", "Начислено, положено на руки и сколько уже пришло."],
+    ["#goal-f", "Цель", "Впиши сумму на руки, и помощник посчитает нужный процент."],
+    ["#t-sum", "Итог вахты", "Как в твоей таблице: выручка, авансы, налог и комиссия."]
+  ],
+  prog: [
+    ["#lvl", "Уровень", "Очки копятся в уровень. Талисман показывает, каким выходит месяц."],
+    ["#pg-chal", "Вызов недели", "Каждую неделю новый. Выполнил — получил очки."],
+    ["#pg-weeks-c", "Серия", "Недели подряд с записями. Больничный серию не рвёт."],
+    ["#pg-badges", "Значки", "Нажми на значок, чтобы узнать, за что он."]
+  ],
+  more: [
+    ["#m-learn", "Обучение", "Истории, подсказки и ответы на вопросы — здесь."],
+    ["#m-look", "Стиль", "Пиксельный, сбалансированный или классический."],
+    ["#m-work", "Работа", "Компания, роли, тарифы процессов и налоги."],
+    ["#m-data", "Данные", "Выгрузка для Excel и перенос из таблицы."]
+  ]
+};
+const FAQ = [
+  ["Почему сумма не совпадает с расчётным листом?", "Помощник считает по тарифу и проценту из настроек. Проверь тариф процесса («Ещё» → «Процессы и тарифы»), фикс роли, премии и штрафы. Налог и комиссия по умолчанию считаются с остатка после авансов, как в таблице; переключатель — в «Выплатах»."],
+  ["Как внести смену задним числом?", "Нажми «+ Смена» и выбери дату. Если на эту дату уже есть запись, откроется её правка."],
+  ["Процент ещё не известен. Что делать?", "Сохрани смену без процента. Пока она считается как 0 ₽, а в прогнозе — по твоему среднему. Когда узнаешь процент, нажми на строку в журнале и допиши."],
+  ["Как считается прогноз?", "Каждая смена по графику × явка × тариф процесса × твой средний процент. Средний можно взять за всю вахту, за 10 последних смен или задать свой."],
+  ["Видит ли кто-то мои смены?", "Нет. Смены лежат в облаке Telegram в твоём аккаунте. Бригадир увидит их, только если ты сам отправишь ему таблицу из «Выгрузки»."],
+  ["За что дают очки?", "+10 за каждую смену, +5 за смену от 100%, +20 за новый личный рекорд и награда за вызов недели. Очки считаются из записей: если удалить смену, её очки тоже уйдут."],
+  ["Больничный рвёт серию?", "Нет. Неделя засчитывается, если в ней есть любая запись: смена, выходной или больничный."],
+  ["Как поменять вид?", "«Ещё» → «Стиль оформления»: пиксельный, сбалансированный или классический. Смены и настройки от этого не меняются."],
+  ["Как выключить подсказки с затемнением?", "В подсказке нажми «Больше не показывать подсказки» или выключи их в «Ещё» → «Подсказки по разделам». Там же их можно включить снова."]
+];
+
+</script>
+<script>
 (function () {
   "use strict";
   const $ = (s, r = document) => r.querySelector(s);
@@ -870,7 +1399,7 @@ if (typeof module !== "undefined") module.exports = { PROCS, COMPANIES, ROLES, S
   /* ---------------- Состояние и хранение (Telegram CloudStorage) ---------------- */
   const S = {
     mode: "loading", loaded: false, readOnly: false, loadError: false, firstRun: false,
-    recs: new Map(), cfg: normCfg({}), tab: "shift",
+    recs: new Map(), cfg: normCfg({}), tab: "shifts", G: null,
     kind: "work", proc: "", role: "", editing: null, cfgHadRoles: false, formTouched: false, formInit: false,
     openMonths: new Set(), openInit: false, R: null
   };
@@ -965,24 +1494,15 @@ if (typeof module !== "undefined") module.exports = { PROCS, COMPANIES, ROLES, S
       TG.ready(); TG.expand();
       if (tgAtLeast("7.7") && TG.disableVerticalSwipes) TG.disableVerticalSwipes();
       if (!IN_TG) return;
-      const applyTheme = () => {
-        const dark = TG.colorScheme === "dark";
-        document.documentElement.setAttribute("data-theme", dark ? "dark" : "light");
-        if (tgAtLeast("6.9")) {
-          const bg = dark ? "#111418" : "#E7EAED", bar = dark ? "#1A1E23" : "#F8F9FA";
-          TG.setHeaderColor(bg); TG.setBackgroundColor(bg);
-          if (tgAtLeast("7.10") && TG.setBottomBarColor) TG.setBottomBarColor(bar);
-        }
-      };
-      applyTheme();
-      TG.onEvent("themeChanged", applyTheme);
+      tgColors();
+      if (tgAtLeast("6.1") && TG.BackButton) TG.BackButton.onClick(onBack);
     } catch (e) { /* старый клиент Telegram */ }
   }
 
   async function boot() {
     initTG();
     fillSelects();
-    bindTabs(); bindForm(); bindSettings(); bindLog(); bindWelcome(); bindImport(); bindMoney();
+    bindTabs(); bindNav(); bindSheets(); bindSlides(); bindForm(); bindSettings(); bindLog(); bindWelcome(); bindImport(); bindMoney();
     fillForm(todayStr());
     render();
     if (CS) {
@@ -1005,16 +1525,21 @@ if (typeof module !== "undefined") module.exports = { PROCS, COMPANIES, ROLES, S
     if (!S.firstRun && !S.cfgHadRoles && Array.from(S.recs.values()).some(r => roleOf(r) === "zam")) S.cfg.roles.zam.on = true;
     S.loaded = true;
     render();
+    if (S.firstRun) { openSheet("sh-wizard"); return; }
+    if (S.cfg.ver !== VERSION) openStory("news");
+    else maybeTour(S.tab);
   }
 
   /* ---------------- Разделы ---------------- */
   function switchTab(t) {
+    if (tourEl) endTour(false);
     S.tab = t;
     $$(".view").forEach(v => { v.hidden = v.dataset.view !== t; });
     $$(".tabbar button").forEach(b => { if (b.dataset.tab === t) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current"); });
     window.scrollTo(0, 0);
     if (t === "fc" && S.R) { drawTraj(S.R); drawPct(S.R); }
     try { if (TG && TG.HapticFeedback && tgAtLeast("6.1")) TG.HapticFeedback.selectionChanged(); } catch (e) { /* ignore */ }
+    maybeTour(t);
   }
   function bindTabs() {
     $(".tabbar").addEventListener("click", e => { const b = e.target.closest("button[data-tab]"); if (b && b.dataset.tab !== S.tab) switchTab(b.dataset.tab); });
@@ -1023,62 +1548,124 @@ if (typeof module !== "undefined") module.exports = { PROCS, COMPANIES, ROLES, S
   /* ---------------- Отрисовка ---------------- */
   function render() {
     const R = compute(Array.from(S.recs.values()), S.cfg, todayStr());
-    S.R = R;
+    const G = gameOf(R);
+    S.R = R; S.G = G;
     if (S.loaded && !S.formInit) { S.formInit = true; if (!S.formTouched) fillForm(defaultDate()); }
+    applyStyle();
     drawWizard(R);
-    drawHero(R); drawMoney(R); drawForecast(R); drawMonths(R); drawProcs(R); drawLog(R); syncSettings(R); drawStatus(); drawRoleChips(); drawProcChips(); updatePreview();
+    drawShifts(R, G); drawStories(); drawMoney(R); drawForecast(R); drawMonths(R); drawProcs(R); drawLog(R);
+    drawProgress(R, G); drawMore(R); syncSettings(R); drawStatus(); drawRoleChips(); drawProcChips(); updatePreview();
     if (S.tab === "fc") { drawTraj(R); drawPct(R); }
   }
 
-  function drawHero(R) {
+
+
+  /* ---------------- Смены (главная) ---------------- */
+  function schedLabel(c) {
+    const p = SCHED_PRESETS.find(x => x.id === c.schedPreset);
+    if (p && p.id !== "custom") return p.label;
+    const s = c.sched;
+    return s.type === "cycle" ? s.on + "/" + s.off : (s.days || []).length + "/" + (7 - (s.days || []).length);
+  }
+  function drawShifts(R, G) {
     const c = R.cfg;
-    $("#h-tariff").textContent = "Тариф " + num(c.tariff) + " ₽ = 100%";
-    const firstWork = R.recs.find(r => r.kind === "work");
-    $("#h-period").textContent = companyTitle(c) + " · " + (firstWork ? "с " + dShort(dnum(firstWork.date)) + " " : "") + "по " + dShort(dnum(c.endDate));
-    $("#h-end-k").textContent = "Прогноз к " + dShort(dnum(c.endDate));
-    if (!S.loaded) return;
-    $("#h-fact").textContent = rub(R.fact.V);
-    let s = R.fact.shifts + " " + smen(R.fact.shifts);
-    if (R.fact.pctMean != null) s += " · ср. " + pc(R.fact.pctMean, 1);
-    if (R.pending) s += " · " + R.pending + " " + smen(R.pending) + " без %";
-    $("#h-fact-s").textContent = R.recs.length ? s : "Смен пока нет";
-    $("#h-end").textContent = rub(R.end.V);
-    $("#h-end-s").textContent = (R.fc.sd > 0 ? "± " + num(R.fc.sd) + " · " : "") + "на руки ≈ " + rub(R.end.total);
+    $("#h-sched").textContent = " · " + schedLabel(c);
+    $("#h-streak").innerHTML = (isClassic() ? lnSvg("bolt", 13) : pxSvg("bolt", 10)) + `<span>${G.streak} нед</span>`;
+    $("#h-level").textContent = "Ур " + G.level.L;
+    $("#h-streak").setAttribute("aria-label", `Серия: ${G.streak} нед. подряд`);
+    $("#h-level").setAttribute("aria-label", `Уровень ${G.level.L}`);
+    const eye = $("#h-eye"), big = $("#h-big"), sub = $("#h-sub");
+    if (!S.loaded) { eye.textContent = "Загружаю смены…"; return; }
+    big.classList.remove("money"); sub.className = "hsub";
+    const last = R.recs.filter(isWork).slice(-1)[0];
+    if (!last) {
+      eye.textContent = "Смен пока нет"; big.innerHTML = "0<small>%</small>";
+      sub.className = "hsub muted"; sub.textContent = "Нажми «+ Смена» после выхода";
+    } else {
+      const n = dnum(last.date);
+      const when = n === R.today ? "Сегодня" : n === R.today - 1 ? "Вчера" : dShort(n);
+      const role = roleOf(last), what = last.proc ? procName(last.proc) : role ? roleName(role) : "Смена";
+      eye.textContent = when + " · " + what + (role && last.proc ? " · " + roleName(role) : "");
+      const amt = rub(shiftAmount(last, c));
+      if (hasFixed(last)) { big.classList.add("money"); big.textContent = amt; sub.className = "hsub muted"; sub.textContent = "Фиксированная оплата"; }
+      else if (last.pct != null) {
+        big.innerHTML = Math.round(last.pct * 100) + "<small>%</small>";
+        const d = Math.round(last.pct * 100) - 100;
+        if (role) sub.textContent = "Фикс " + roleName(role) + " + выработка · " + amt;
+        else if (d > 0) sub.textContent = "Выше нормы на " + d + "% · " + amt;
+        else if (d === 0) sub.textContent = "Ровно норма · " + amt;
+        else { sub.className = "hsub muted"; sub.textContent = "Ниже нормы на " + (-d) + "% · " + amt; }
+      } else if (isPending(last, c)) {
+        big.innerHTML = "?<small>%</small>"; sub.className = "hsub muted"; sub.textContent = "Процент не внесён: нажми на смену в журнале";
+      } else {
+        big.classList.add("money"); big.textContent = amt; sub.className = "hsub muted";
+        sub.textContent = role ? "Фикс " + ROLES.find(x => x.id === role).gen : procName(last.proc) + ": фикс за смену";
+      }
+    }
+    drawGoalCard(R);
+    const rc = R.recon, plan = R.fact.shifts + Math.round(R.fc.shifts);
+    $("#h-stats").innerHTML = `
+      <div><span class="sv">${num(R.fact.V)}</span><span class="k">Заработано, ₽</span></div>
+      <div><span class="sv">${R.fact.shifts}${plan > R.fact.shifts ? "<span class=\"muted\">/" + plan + "</span>" : ""}</span><span class="k">Смены</span></div>
+      <div><span class="sv">${rc.diff > 0 ? num(rc.diff) : "0"}</span><span class="k">Ещё должны, ₽</span></div>`;
+    drawChallengeCard($("#challenge"), G.current);
+  }
+  function drawGoalCard(R) {
+    const el = $("#goalcard"), g = R.goal, end = dShort(dnum(R.cfg.endDate));
+    if (!g) {
+      el.innerHTML = `<div class="card-h"><span class="card-t">Цель вахты</span></div>
+        <p class="note-s">Сколько хочешь получить на руки к ${end}? Поставь цель, и помощник покажет, какой процент нужен в среднем.</p>
+        <div><button type="button" class="btn sm" data-go="pay" data-focus="g-goal">Поставить цель</button></div>`;
+      return;
+    }
+    const got = Math.max(0, R.recon.due), share = Math.max(0, Math.min(1, got / g.goal));
+    let need = "";
+    if (g.done) need = "Цель уже заработана, дальше всё сверху.";
+    else if (!g.shifts) need = "Смен до конца вахты не осталось по графику.";
+    else if (g.needPct != null) need = `Нужно в среднем ${pc(g.needPct, 0)} в ≈ ${Math.round(g.shifts)} ${smen(g.shifts)}` + (R.fact.pctMean != null ? `, сейчас ${pc(R.fact.pctMean, 0)}.` : ".");
+    else need = `Нужно ещё ${rub(g.needV)} выработки за ≈ ${Math.round(g.shifts)} ${smen(g.shifts)}.`;
+    el.innerHTML = `<div class="card-h"><span class="card-t">Цель вахты</span><span class="note-s num">${num(got)} / ${num(g.goal)} ₽</span></div>
+      <div class="track" aria-hidden="true"><div class="tb"></div><div class="tf" style="width:${(share * 100).toFixed(1)}%"></div><span class="tick" style="left:25%"></span><span class="tick" style="left:50%"></span><span class="tick" style="left:75%"></span></div>
+      <div class="trk-l"><span>СТАРТ</span><b>${Math.round(share * 100)}%</b><span>ФИНИШ · ${end}</span></div>
+      <p class="note-s">${need}</p>`;
+  }
+  function drawChallengeCard(el, ch) {
+    const cells = Array.from({ length: ch.need }, (_, i) => `<i class="${i < ch.val ? "on" : ""}"></i>`).join("");
+    el.innerHTML = `<div class="card-h"><span class="card-t game">Вызов недели</span><span class="note-s">${ch.done ? "выполнен" : "до воскресенья"}</span></div>
+      <span style="font-size:18px;font-weight:600">${esc(ch.text)}</span>
+      <div class="cells" aria-hidden="true">${cells}</div>
+      <span class="note-s">${ch.val} из ${ch.need} · ${ch.done ? "+" + ch.reward + " очков получено" : "награда " + ch.reward + " очков"}</span>`;
   }
 
+  /* ---------------- Выплаты ---------------- */
   function drawMoney(R) {
     const c = R.cfg, rc = R.recon;
-    // сверка
-    const v = $("#rc-verdict");
-    if (!S.loaded) { v.className = "verdict due"; v.innerHTML = '<span class="vk">Ещё должны</span><span class="vv">—</span>'; }
-    else if (Math.abs(rc.diff) < 1) { v.className = "verdict ok"; v.innerHTML = '<span class="vk">Всё сходится</span><span class="vv">0 ₽</span>'; }
-    else if (rc.diff > 0) { v.className = "verdict due"; v.innerHTML = `<span class="vk">Ещё должны за отработанное</span><span class="vv">${rub(rc.diff)}</span>`; }
-    else { v.className = "verdict over"; v.innerHTML = `<span class="vk">Пришло больше, чем начислено</span><span class="vv">${rub(-rc.diff)}</span>`; }
-    $("#rc-kv").innerHTML = S.loaded ? `
+    const eye = $("#pay-eye"), big = $("#pay-big"), sub = $("#pay-sub");
+    if (!S.loaded) { big.textContent = "—"; return; }
+    sub.className = "hsub muted";
+    if (Math.abs(rc.diff) < 1) { eye.textContent = "Сверка выплат"; big.textContent = "0 ₽"; sub.className = "hsub good"; sub.textContent = R.fact.V ? "Всё сходится: пришло столько, сколько положено" : "Смен пока нет"; }
+    else if (rc.diff > 0) { eye.textContent = "Ещё должны за отработанное"; big.textContent = rub(rc.diff); sub.textContent = `Положено на руки ${rub(rc.due)}, пришло ${rub(rc.received)}`; }
+    else { eye.textContent = "Пришло больше, чем начислено"; big.textContent = rub(-rc.diff); sub.className = "hsub"; sub.textContent = "Проверь, все ли смены и премии внесены"; }
+    $("#rc-kv").innerHTML = `
       <dt>Начислено за смены</dt><dd>${rub(R.fact.V)}</dd>
       ${R.fact.adj ? `<dt>в т. ч. премии и штрафы</dt><dd>${R.fact.adj > 0 ? "+" : "−"}${rub(Math.abs(R.fact.adj))}</dd>` : ""}
       <dt class="strong">Положено на руки</dt><dd class="strong">${rub(rc.due)}</dd>
       <dt>Пришло авансами</dt><dd>${rub(rc.adv)}</dd>
       <dt>Пришло зарплатой</dt><dd>${rub(rc.paid)}</dd>
-      <dt class="strong">Пришло всего</dt><dd class="strong">${rub(rc.received)}</dd>` : "";
-    // цель
+      <dt class="strong">Пришло всего</dt><dd class="strong">${rub(rc.received)}</dd>`;
     setVal("g-goal", c.goal ? String(c.goal) : "");
-    const out = $("#g-out"), g = R.goal;
-    out.hidden = !(g && S.loaded);
-    if (g && S.loaded) {
-      const share = Math.max(0, Math.min(1, g.expected / g.goal));
-      $("#g-bar").style.width = (share * 100).toFixed(1) + "%";
+    const gl = $("#g-line"), g = R.goal;
+    gl.hidden = !g;
+    if (g) {
       let t = `По прогнозу на руки выйдет ≈ <b>${rub(g.expected)}</b> из ${rub(g.goal)} (${pc(g.expected / g.goal, 0)}). `;
       if (g.done) t += "Цель уже заработана, дальше всё сверху.";
-      else if (!g.shifts) t += "Смен до конца вахты не осталось. Поменяй дату конца вахты или график в «Прогнозе».";
+      else if (!g.shifts) t += "Смен до конца вахты не осталось: поменяй дату конца вахты или график в «Прогнозе».";
       else if (g.needPct != null) {
-        t += `Чтобы дойти до цели, нужно в среднем <b>${pc(g.needPct, 0)}</b> в оставшиеся ≈ ${Math.round(g.shifts)} ${smen(g.shifts)}`;
-        t += R.fact.pctMean != null ? `, а сейчас у тебя ${pc(R.fact.pctMean, 0)}.` : ".";
-        if (g.needPct > 2) t += " Это нереально много: стоит пересмотреть цель или график.";
+        t += `Чтобы дойти до цели, нужно в среднем <b>${pc(g.needPct, 0)}</b> в оставшиеся ≈ ${Math.round(g.shifts)} ${smen(g.shifts)}` + (R.fact.pctMean != null ? `, а сейчас у тебя ${pc(R.fact.pctMean, 0)}.` : ".");
+        if (g.needPct > 2) t += " Это очень много: стоит пересмотреть цель или график.";
       } else t += `Нужно ещё ${rub(g.needV)} выработки за ≈ ${Math.round(g.shifts)} ${smen(g.shifts)}, по ${rub(g.perNeed)} за смену.`;
-      $("#g-line").innerHTML = t;
+      gl.innerHTML = t;
     }
-    // итог вахты
     const now = payout(R.fact.V, R.fact.A, c), end = payout(R.end.V, R.end.A, c);
     $("#t-end-h").textContent = "К " + dShort(dnum(c.endDate));
     const rateTxt = "налог " + pc(c.tax) + " + комиссия " + pc(c.comm);
@@ -1090,17 +1677,73 @@ if (typeof module !== "undefined") module.exports = { PROCS, COMPANIES, ROLES, S
       ["Без налогов", now.net, end.net, "key", ""],
       ["Итого на руки<span class=\"sub\">аванс + без налогов</span>", now.total, end.total, "total", ""]
     ];
-    $("#t-body").innerHTML = rows.map(r =>
-      `<tr class="${r[3]}"><td>${r[0]}</td><td>${S.loaded ? num(r[1]) : "—"}</td><td>${S.loaded ? num(r[2]) : "—"}${r[4] && S.loaded ? `<span class="sub">${r[4]}</span>` : ""}</td></tr>`
-    ).join("");
-    const rate = c.tax + c.comm, note = $("#t-note");
-    note.innerHTML = c.taxMode === "all"
+    $("#t-body").innerHTML = rows.map(r => `<tr class="${r[3]}"><td>${r[0]}</td><td>${num(r[1])}</td><td>${num(r[2])}${r[4] ? `<span class="sub">${r[4]}</span>` : ""}</td></tr>`).join("");
+    const rate = c.tax + c.comm;
+    $("#t-note").innerHTML = c.taxMode === "all"
       ? `<span>Налог и комиссия считаются со всей выработки, включая авансы.</span><button type="button" class="linkbtn" data-setmode="remainder">Считать с остатка после авансов</button>`
       : `<span>Налог и комиссия считаются с остатка после авансов. Если ${pc(rate, 1)} удерживают и с авансов, на руки выйдет меньше: сейчас на ${rub(now.A * rate)}, к концу вахты на ${rub(end.A * rate)}.</span><button type="button" class="linkbtn" data-setmode="all">Считать со всей выработки</button>`;
   }
 
+  /* ---------------- Прогресс ---------------- */
+  function drawProgress(R, G) {
+    const L = G.level;
+    $("#pg-pts").innerHTML = (isClassic() ? lnSvg("star", 13) : pxSvg("star", 10)) + `<span>${num(G.pts)} очков</span>`;
+    const cur = G.moods.length ? G.moods[G.moods.length - 1].mood : "ok";
+    $("#pg-mascot").innerHTML = mascot(cur, 72);
+    $("#pg-level").textContent = L.L;
+    const on = Math.floor(L.share * 10);
+    $("#pg-cells").innerHTML = Array.from({ length: 10 }, (_, i) => `<i class="${i < on ? "on" : ""}"></i>`).join("");
+    $("#pg-next").textContent = `До уровня ${L.L + 1}: ${num(L.to - G.pts)} очков`;
+    $("#pg-stats").innerHTML = `
+      <div><span class="sv game">${G.streak}</span><span class="k">Недель подряд</span></div>
+      <div><span class="sv game">${G.best != null ? pc(G.best, 0) : "—"}</span><span class="k">Рекорд смены</span></div>
+      <div><span class="sv game">${G.doneWeeks}</span><span class="k">Вызовов</span></div>`;
+    drawChallengeCard($("#pg-chal"), G.current);
+    const wk = G.weeks.slice(-21);
+    $("#pg-weeks").innerHTML = wk.map((w, i) => {
+      const isCur = i === wk.length - 1 && w.mon === G.current.mon;
+      const p = parts(w.mon);
+      const t = `Неделя с ${p.d} ${MON_GEN[p.m - 1]}: ${w.has ? "есть записи" : "без записей"}${w.done ? ", вызов выполнен" : ""}`;
+      return `<i class="${w.has ? "on" : isCur ? "cur" : ""}" title="${t}"></i>`;
+    }).join("") || '<span class="note-s">Серия начнётся с первой записи.</span>';
+    $("#pg-weeks-n").textContent = G.maxStreak ? `рекорд ${G.maxStreak} нед` : "";
+    const got = G.badges.filter(b => b.got).length;
+    $("#pg-bd-n").textContent = `${got} из ${G.badges.length}`;
+    $("#pg-badges").innerHTML = G.badges.map(b => `<button type="button" class="bd${b.got ? "" : " off"}" data-badge="${b.id}" aria-label="${esc(b.name)}: ${b.got ? "получен" : "не получен"}"><span class="bi">${gameIc(b.px, b.emo, 20)}</span>${esc(b.name)}</button>`).join("");
+    const years = new Set(G.moods.map(m => m.key.slice(0, 4)));
+    $("#pg-moods").innerHTML = G.moods.length ? G.moods.slice().reverse().map(m => `<div class="mood">${mascot(m.mood, 40)}<b>${monthTitle(m.key, years.size > 1)}</b><span>${MOOD_TXT[m.mood]}${m.avg != null ? " · " + pc(m.avg, 0) : ""}</span></div>`).join("")
+      : '<div class="empty" style="width:100%">Итоги месяца появятся после первых смен.</div>';
+    $("#pg-rules").innerHTML = `
+      <div><span>Каждая внесённая смена</span><b>+${PTS.shift}</b></div>
+      <div><span>Смена от 100%</span><b>+${PTS.over}</b></div>
+      <div><span>Новый личный рекорд %</span><b>+${PTS.record}</b></div>
+      <div><span>Вызов недели</span><b>+50…80</b></div>
+      <p class="note-s">Очки считаются из записей: если удалить или исправить смену, очки пересчитаются. Уровень растёт всё медленнее: до 2-го нужно 100 очков, до 3-го — ещё 200, и так далее.</p>`;
+  }
+
+  /* ---------------- Ещё ---------------- */
+  function drawMore(R) {
+    const c = R.cfg;
+    $("#m-ver").textContent = S.cfg.ver !== VERSION && !S.firstRun ? "Новое в версии " + VERSION : "Версия " + VERSION;
+    $("#m-style-n").textContent = STYLES.find(s => s.id === styleOf()).name;
+    const roles = ROLES.filter(r => c.roles[r.id] && c.roles[r.id].on).map(r => r.name);
+    $("#m-company-n").textContent = companyTitle(c) + (roles.length ? " · " + roles.join(", ") : "");
+    const custom = PROCS.filter(p => c.procs[p.id] && (c.procs[p.id].t > 0 || c.procs[p.id].m === "fixed")).length;
+    $("#m-procs-n").textContent = custom ? `Свои тарифы: ${custom} из ${PROCS.length}` : "Все по основному тарифу " + num(c.tariff) + " ₽";
+    $("#m-rates-n").textContent = `Тариф ${num(c.tariff)} ₽ · налог ${pc(c.tax)} + ${pc(c.comm)}`;
+    $("#m-tours-sw").classList.toggle("on", !c.tourOff);
+    $("#m-tours").setAttribute("aria-pressed", String(!c.tourOff));
+    $("#ver").textContent = "Вахтовый помощник " + VERSION + " · семейство ботов";
+  }
+
   function drawForecast(R) {
     const c = R.cfg, f = R.fc, line = $("#fc-line");
+    if (S.loaded) {
+      $("#fc-eye").textContent = "Выработка к " + dShort(f.endN);
+      $("#fc-big").textContent = rub(R.end.V);
+      $("#fc-sub").className = "hsub muted";
+      $("#fc-sub").textContent = (R.fc.sd > 0 ? "± " + num(R.fc.sd) + " · " : "") + "на руки ≈ " + rub(R.end.total);
+    }
     if (f.startN > f.endN) { line.innerHTML = "Конец вахты уже прошёл. Поменяй дату в параметрах прогноза, чтобы посчитать дальше."; $("#fc-scen").hidden = true; return; }
     const pend = R.pending ? `, включая ${R.pending} ${smen(R.pending)} без %` : "";
     const how = R.basis.mainFixed ? "фикс" : pc(R.basis.p, 1);
@@ -1113,7 +1756,7 @@ if (typeof module !== "undefined") module.exports = { PROCS, COMPANIES, ROLES, S
     if (alt == null) { sc.hidden = true; return; }
     const A = compute(R.recs, Object.assign({}, c, { attendance: alt }), todayStr());
     const why = alt === 1 ? "При полной явке" : `Если выходить как с начала вахты (${pc(alt)} смен графика)`;
-    sc.innerHTML = `<span>${why}, к ${dShort(f.endN)} будет ≈ <b>${rub(A.end.V)}</b></span><button type="button" class="btn small ghost" data-att="${alt}">Взять ${pc(alt)}</button>`;
+    sc.innerHTML = `<span>${why}, к ${dShort(f.endN)} будет ≈ <b>${rub(A.end.V)}</b></span><button type="button" class="btn sm" data-att="${alt}">Взять ${pc(alt)}</button>`;
     sc.hidden = false;
   }
 
@@ -1322,7 +1965,7 @@ if (typeof module !== "undefined") module.exports = { PROCS, COMPANIES, ROLES, S
     const el = $("#log");
     if (!S.loaded) { el.innerHTML = '<div class="empty">Загружаю смены…</div>'; return; }
     if (!R.recs.length) {
-      el.innerHTML = '<div class="empty"><b>Смен пока нет.</b><span>Внеси первую смену в разделе «Смена»: дата, процесс, % выработки и аванс, если давали. Итоги и прогноз посчитаются сами.</span></div>';
+      el.innerHTML = '<div class="empty"><b>Смен пока нет</b><span>После выхода нажми «+ Смена»: дата, процесс и процент. Сумма, прогноз и очки посчитаются сами.</span></div>';
       return;
     }
     const groups = new Map();
@@ -1354,6 +1997,7 @@ if (typeof module !== "undefined") module.exports = { PROCS, COMPANIES, ROLES, S
     $("#p-days").innerHTML = days; $("#w-days").innerHTML = days;
     const sp = SCHED_PRESETS.map(p => `<button type="button" data-sp="${p.id}" aria-pressed="false">${p.label}</button>`).join("");
     $("#p-sched").innerHTML = sp; $("#w-sched").innerHTML = sp;
+    $("#faq").innerHTML = FAQ.map(([q, a]) => `<details><summary>${q}</summary><p>${a}</p></details>`).join("");
     $("#w-proc").innerHTML = PROCS.map(p => `<button type="button" data-proc="${p.id}" aria-pressed="false">${p.name}</button>`).join("");
   }
 
@@ -1414,6 +2058,242 @@ if (typeof module !== "undefined") module.exports = { PROCS, COMPANIES, ROLES, S
       else if (S.loaded) { cls = "ok"; txt = "Смены хранятся в твоём аккаунте Telegram и видны на всех устройствах, где ты вошёл."; }
     } else if (S.mode === "local") { cls = "warn"; txt = "Открыто не через бота: смены хранятся только в этом браузере. Чтобы они были в Telegram, открой приложение через бота."; }
     $("#status").innerHTML = `<span class="dot ${cls}"></span><span>${txt}</span>`;
+  }
+
+  /* ---------------- Стиль оформления ---------------- */
+  const STYLES = [
+    { id: "pixel", name: "Пиксельный", d: "Пиксельные значки, клетки и талисман, яркие цвета.", sw: ["#FF6A1A", "#B79CFF", "#5DD39E", "#F7D154"] },
+    { id: "balanced", name: "Сбалансированный", d: "Линейные значки в меню. Пиксели остались только в игре: талисман, значки, клетки. Цвета спокойнее.", sw: ["#F2945E", "#A99BDB", "#8CCFA0", "#E2B86E"] },
+    { id: "classic", name: "Классический", d: "Совсем без пикселей: линейные значки и эмодзи, плавные полосы, обычный шрифт цифр, сдержанные цвета.", sw: ["#D9A47A", "#AFA8CF", "#9CC5A6", "#C9A46A"] }
+  ];
+  const styleOf = () => (STYLES.some(s => s.id === S.cfg.style) ? S.cfg.style : "pixel");
+  const isPx = () => styleOf() === "pixel";
+  const isClassic = () => styleOf() === "classic";
+  function ic(name, size) { return isPx() ? pxSvg(name, 20) : lnSvg(name, size || 20); }
+  function gameIc(name, emo, size) { return isClassic() ? `<span class="emo">${emo}</span>` : pxSvg(name, size || 20); }
+  function mascot(mood, size) { return isClassic() ? `<span class="emo">${MOOD_EMO[mood] || "🙂"}</span>` : mascotSvg(mood, size, true); }
+  function tgColors() {
+    if (!IN_TG || !tgAtLeast("6.9")) return;
+    try {
+      const bg = isClassic() ? "#0C0C0E" : "#0B0B0D";
+      TG.setHeaderColor(bg); TG.setBackgroundColor(bg);
+      if (tgAtLeast("7.10") && TG.setBottomBarColor) TG.setBottomBarColor(bg);
+    } catch (e) { /* старый клиент */ }
+  }
+  function applyStyle() {
+    const st = styleOf();
+    if (document.body.dataset.style !== st) { document.body.dataset.style = st; tgColors(); }
+    $$("[data-ic]").forEach(el => {
+      const key = st + ":" + el.dataset.ic;
+      if (el.dataset.icr !== key) { el.innerHTML = ic(el.dataset.ic, el.classList.contains("ti") ? 22 : 20); el.dataset.icr = key; }
+    });
+  }
+  function drawStyleCards() {
+    const cur = styleOf();
+    $("#st-cards").innerHTML = STYLES.map(s => {
+      const demo = s.id === "pixel" ? pxSvg("trophy", 30) : s.id === "balanced" ? lnSvg("trophy", 28) : '<span style="font-size:28px;line-height:1">🏆</span>';
+      return `<button type="button" class="stylec${s.id === cur ? " on" : ""}" data-style="${s.id}" aria-pressed="${s.id === cur}">
+        <span class="sx" style="color:${s.sw[0]}">${demo}</span>
+        <span><b>${s.name}</b>${s.id === cur ? ' <span class="pill role">сейчас</span>' : ""}<span class="sd" style="display:block">${s.d}</span>
+        <span class="sw2">${s.sw.map(c => `<i style="background:${c}"></i>`).join("")}</span></span></button>`;
+    }).join("");
+  }
+
+  /* ---------------- Шторки ---------------- */
+  const sheetStack = [];
+  function anyOverlay() { return sheetStack.length > 0 || !$("#slides").hidden || !!tourEl; }
+  function lockScroll() { document.body.style.overflow = anyOverlay() ? "hidden" : ""; }
+  function openSheet(id) {
+    const el = document.getElementById(id);
+    if (!el) return null;
+    if (el.hidden) {
+      el.hidden = false; void el.offsetWidth; el.classList.add("open");
+      sheetStack.push(id);
+      const b = el.querySelector(".sheet-b"); if (b) b.scrollTop = 0;
+    }
+    lockScroll(); backBtn();
+    return el;
+  }
+  function closeSheet(id) {
+    id = id || sheetStack[sheetStack.length - 1];
+    const el = id && document.getElementById(id);
+    if (!el || el.hidden) return;
+    if (id === "sh-wizard" && S.firstRun) return;
+    el.classList.remove("open");
+    const i = sheetStack.lastIndexOf(id); if (i >= 0) sheetStack.splice(i, 1);
+    setTimeout(() => { if (!el.classList.contains("open")) el.hidden = true; }, reduceMotion ? 0 : 200);
+    lockScroll(); backBtn();
+    if (id === "sh-shift") $$(".r.sel").forEach(b => b.classList.remove("sel"));
+    afterOverlay();
+  }
+  function backBtn() {
+    if (!IN_TG || !tgAtLeast("6.1") || !TG.BackButton) return;
+    try { if (sheetStack.length || !$("#slides").hidden) TG.BackButton.show(); else TG.BackButton.hide(); } catch (e) { /* ignore */ }
+  }
+  function onBack() {
+    if (!$("#slides").hidden) { closeSlides(); return; }
+    closeSheet();
+  }
+  function afterOverlay() { if (!anyOverlay()) maybeTour(S.tab); }
+  function bindSheets() {
+    $$(".ovl").forEach(o => o.addEventListener("click", e => {
+      if (e.target === o || e.target.closest("[data-close]")) closeSheet(o.id);
+    }));
+    document.addEventListener("keydown", e => { if (e.key === "Escape") { if (tourEl) endTour(false); else onBack(); } });
+  }
+  function openShift(date) {
+    fillForm(date || defaultDate());
+    openSheet("sh-shift");
+  }
+
+  /* ---------------- Навигация ---------------- */
+  function bindNav() {
+    document.addEventListener("click", e => {
+      const g = e.target.closest("[data-go]");
+      if (!g) return;
+      const f = g.dataset.focus;
+      switchTab(g.dataset.go);
+      if (f) setTimeout(() => { const el = document.getElementById(f); if (el) { el.scrollIntoView({ block: "center" }); el.focus(); } }, 60);
+    });
+    $("#add-btn").addEventListener("click", () => openShift());
+    $("#v-more").addEventListener("click", e => {
+      const b = e.target.closest("[data-act]"); if (!b) return;
+      const a = b.dataset.act;
+      if (a === "slides") openStory("start");
+      else if (a === "news") openStory("news");
+      else if (a === "faq") openSheet("sh-faq");
+      else if (a === "style") { drawStyleCards(); openSheet("sh-style"); }
+      else if (a === "company") openSheet("sh-company");
+      else if (a === "procs") openSheet("sh-procs");
+      else if (a === "rates") openSheet("sh-rates");
+      else if (a === "data") openSheet("sh-data");
+      else if (a === "tours") {
+        const off = !S.cfg.tourOff;
+        setCfg(off ? { tourOff: true } : { tourOff: false, tour: {} });
+        toast(off ? "Подсказки по разделам выключены" : "Подсказки включены: покажутся при входе в раздел");
+      }
+    });
+    $("#st-cards").addEventListener("click", e => {
+      const b = e.target.closest("button[data-style]"); if (!b) return;
+      setCfg({ style: b.dataset.style });
+      drawStyleCards(); haptic("success");
+    });
+    $("#pg-badges").addEventListener("click", e => {
+      const b = e.target.closest("button[data-badge]"); if (!b || !S.G) return;
+      const bd = S.G.badges.find(x => x.id === b.dataset.badge); if (!bd) return;
+      $("#bd-title").textContent = bd.name;
+      $("#bd-body").innerHTML = `<div style="display:flex;gap:14px;align-items:center">
+        <span class="bd${bd.got ? "" : " off"}" style="padding:0;background:none"><span class="bi" style="width:64px;height:64px">${gameIc(bd.px, bd.emo, 30)}</span></span>
+        <span style="display:flex;flex-direction:column;gap:4px"><b style="font-size:17px">${esc(bd.name)}</b><span class="muted">${esc(bd.how)}</span></span></div>
+        <p class="hsub ${bd.got ? "" : "muted"}" style="color:${bd.got ? "var(--game)" : ""}">${bd.got ? "Значок получен" : "Пока не получен"}</p>`;
+      openSheet("sh-badge");
+    });
+    ["#stories", "#stories2"].forEach(sel => $(sel).addEventListener("click", e => {
+      const b = e.target.closest("button[data-story]"); if (b) openStory(b.dataset.story);
+    }));
+  }
+
+  /* ---------------- Истории ---------------- */
+  let SL = null;
+  const seenSet = () => new Set(Array.isArray(S.cfg.seen) ? S.cfg.seen : []);
+  function drawStories() {
+    const seen = seenSet(), newsNew = S.cfg.ver !== VERSION && !S.firstRun;
+    const html = STORIES.map(st => {
+      const cls = st.news ? (newsNew ? " new" : " seen") : (seen.has(st.id) ? " seen" : "");
+      const icon = st.id === "game" || st.news ? gameIc(st.ic, st.news ? "🎁" : "🏆", 20) : ic(st.ic, 22);
+      return `<button type="button" class="story${cls}" data-story="${st.id}"><span class="ring"><span class="in">${icon}</span></span>${st.label}</button>`;
+    }).join("");
+    $("#stories").innerHTML = html; $("#stories2").innerHTML = html;
+  }
+  function openStory(id, onDone) {
+    const st = STORIES.find(s => s.id === id); if (!st) return;
+    SL = { st, i: 0, onDone };
+    $("#slides").hidden = false; lockScroll(); backBtn();
+    drawSlide();
+    const seen = seenSet();
+    if (st.news) { if (S.cfg.ver !== VERSION) setCfg({ ver: VERSION }); }
+    else if (!seen.has(id)) { seen.add(id); setCfg({ seen: Array.from(seen) }); }
+  }
+  function drawSlide() {
+    const { st, i } = SL, s = st.slides[i], n = st.slides.length;
+    $("#sl-cells").innerHTML = Array.from({ length: n }, (_, j) => `<i class="${j <= i ? "on" : ""}"></i>`).join("");
+    const art = $("#sl-art");
+    art.style.color = s.game ? "var(--game)" : "";
+    art.innerHTML = s.mascot ? mascot(s.mascot, 96) : (s.game ? gameIc(s.ic, "⭐", 80) : (isPx() ? pxSvg(s.ic, 80) : lnSvg(s.ic, 72)));
+    const k = $("#sl-k"); k.textContent = s.k || st.label; k.style.color = s.game ? "var(--game)" : "";
+    $("#sl-t").textContent = s.t;
+    $("#sl-d").innerHTML = s.d;
+    $("#sl-prev").disabled = i === 0;
+    $("#sl-next").textContent = i === n - 1 ? "Понятно" : "Дальше";
+  }
+  function closeSlides() {
+    if ($("#slides").hidden) return;
+    $("#slides").hidden = true;
+    const cb = SL && SL.onDone; SL = null;
+    lockScroll(); backBtn();
+    if (cb) cb(); else afterOverlay();
+  }
+  function bindSlides() {
+    $("#sl-x").addEventListener("click", closeSlides);
+    $("#sl-prev").addEventListener("click", () => { if (SL && SL.i > 0) { SL.i--; drawSlide(); } });
+    $("#sl-next").addEventListener("click", () => {
+      if (!SL) return;
+      if (SL.i < SL.st.slides.length - 1) { SL.i++; drawSlide(); } else closeSlides();
+    });
+  }
+
+  /* ---------------- Подсказки по разделам (затемнение) ---------------- */
+  let tourEl = null;
+  function maybeTour(tab) {
+    if (!S.loaded || S.firstRun || S.cfg.tourOff || (S.cfg.tour && S.cfg.tour[tab]) || anyOverlay()) return;
+    setTimeout(() => { if (S.tab === tab && !anyOverlay() && !(S.cfg.tour && S.cfg.tour[tab]) && !S.cfg.tourOff) startTour(tab); }, 420);
+  }
+  function markTour(tab, off) {
+    const tour = Object.assign({}, S.cfg.tour || {}, { [tab]: 1 });
+    setCfg(off ? { tour, tourOff: true } : { tour });
+  }
+  function startTour(tab) {
+    const steps = (TOURS[tab] || []).filter(([sel]) => { const el = document.querySelector(sel); return el && el.getClientRects().length; });
+    if (!steps.length) { markTour(tab); return; }
+    const el = document.createElement("div");
+    el.className = "tour"; el.dataset.tab = tab; el.setAttribute("role", "dialog"); el.setAttribute("aria-modal", "true");
+    el.innerHTML = `<div class="tour-spot"></div><div class="tour-tip" aria-live="polite"><div class="tour-k"></div><div class="tour-t"></div><div class="tour-d"></div>
+      <div class="tour-nav"><button type="button" class="tour-skip">Пропустить</button><button type="button" class="btn sm pri tour-next">Далее</button></div>
+      <button type="button" class="tour-off">Больше не показывать подсказки</button></div>`;
+    document.body.appendChild(el); tourEl = el; lockScroll();
+    requestAnimationFrame(() => el.classList.add("show"));
+    const spot = $(".tour-spot", el), tip = $(".tour-tip", el);
+    let i = 0;
+    const place = () => {
+      const t = document.querySelector(steps[i][0]); if (!t || !tourEl) return;
+      const vh = window.innerHeight, barH = ($(".tabbar").getBoundingClientRect().height || 66);
+      let r = t.getBoundingClientRect();
+      if (r.top < 12 || r.bottom > vh - barH - 12) { window.scrollBy(0, r.top - Math.max(12, (vh - barH - Math.min(r.height, vh * 0.5)) / 2)); r = t.getBoundingClientRect(); }
+      const pad = 6, top = Math.max(6, r.top - pad), bot = Math.min(vh - 6, r.bottom + pad);
+      spot.style.left = (r.left - pad) + "px"; spot.style.top = top + "px";
+      spot.style.width = (r.width + pad * 2) + "px"; spot.style.height = Math.max(0, bot - top) + "px";
+      $(".tour-k", el).textContent = `Подсказка ${i + 1} из ${steps.length}`;
+      $(".tour-t", el).textContent = steps[i][1];
+      $(".tour-d", el).textContent = steps[i][2];
+      $(".tour-next", el).textContent = i === steps.length - 1 ? "Понятно" : "Далее";
+      const th = tip.offsetHeight;
+      if (bot + 14 + th < vh - 8) tip.style.top = (bot + 14) + "px";
+      else if (top - 14 - th > 8) tip.style.top = (top - 14 - th) + "px";
+      else tip.style.top = Math.max(8, vh - th - 12) + "px";
+    };
+    $(".tour-next", el).addEventListener("click", () => { if (i < steps.length - 1) { i++; place(); } else endTour(false); });
+    $(".tour-skip", el).addEventListener("click", () => endTour(false));
+    $(".tour-off", el).addEventListener("click", () => { endTour(true); toast("Подсказки выключены. Включить снова — «Ещё» → «Подсказки по разделам»."); });
+    el.addEventListener("click", e => { if (e.target === el) { if (i < steps.length - 1) { i++; place(); } else endTour(false); } });
+    requestAnimationFrame(place);
+  }
+  function endTour(off) {
+    if (!tourEl) return;
+    const tab = tourEl.dataset.tab, el = tourEl;
+    tourEl = null;
+    el.classList.remove("show"); setTimeout(() => el.remove(), reduceMotion ? 0 : 180);
+    lockScroll();
+    markTour(tab, off);
   }
 
   /* ---------------- Форма ---------------- */
@@ -1482,7 +2362,6 @@ if (typeof module !== "undefined") module.exports = { PROCS, COMPANIES, ROLES, S
     $("#f-hint").textContent = ed ? "Запись уже есть, правишь её" : "Сегодня " + dLabel(dnum(todayStr()));
     $("#f-save").textContent = ed ? "Сохранить изменения" : "Сохранить смену";
     $("#f-del").hidden = !ed;
-    $("#f-new").hidden = !ed;
   }
   function readForm() {
     const kind = S.kind, work = kind === "work";
@@ -1552,7 +2431,7 @@ if (typeof module !== "undefined") module.exports = { PROCS, COMPANIES, ROLES, S
       saveRec(rec);
       haptic("success");
       toast((wasEdit ? "Обновлено: " : "Сохранено: ") + dLabel(n) + (rec.kind === "work" ? " — " + rub(shiftAmount(rec, S.cfg)) : ""));
-      fillForm(wasEdit ? r.date : dstr(n + 1));
+      closeSheet("sh-shift");
     });
     $("#f-del").addEventListener("click", () => {
       const b = $("#f-del");
@@ -1561,9 +2440,8 @@ if (typeof module !== "undefined") module.exports = { PROCS, COMPANIES, ROLES, S
       if (!d) return;
       deleteRec(d);
       toast("Удалено: " + dLabel(dnum(d)));
-      fillForm(d);
+      closeSheet("sh-shift");
     });
-    $("#f-new").addEventListener("click", () => fillForm(defaultDate()));
   }
 
   function bindLog() {
@@ -1571,9 +2449,7 @@ if (typeof module !== "undefined") module.exports = { PROCS, COMPANIES, ROLES, S
       const b = e.target.closest(".r[data-date]");
       if (!b) return;
       S.formTouched = true;
-      fillForm(b.dataset.date);
-      switchTab("shift");
-      $("#entry").scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
+      openShift(b.dataset.date);
     });
     $("#log").addEventListener("toggle", e => {
       const d = e.target;
@@ -1631,7 +2507,7 @@ if (typeof module !== "undefined") module.exports = { PROCS, COMPANIES, ROLES, S
       got.forEach(r => { S.recs.set(r.date, r); months.add(monthKeyOf(r.date)); });
       render();
       for (const k of months) await saveMonth(k);
-      $("#imp-text").value = ""; $("#imp").open = false;
+      $("#imp-text").value = ""; closeSheet("sh-data");
       haptic("success");
       toast("Перенесено " + got.length + " " + plural(got.length, "запись", "записи", "записей"));
     });
@@ -1651,10 +2527,8 @@ if (typeof module !== "undefined") module.exports = { PROCS, COMPANIES, ROLES, S
   /* ---------------- Анкета первого запуска ---------------- */
   const W = { step: 1, proc: "", sched: "61", days: [1, 2, 3, 4, 5, 6] };
   function drawWizard(R) {
-    const wel = $("#welcome");
-    wel.hidden = !(S.loaded && S.firstRun);
-    $("#entry").hidden = !wel.hidden;  // пока идёт анкета, форму смены не показываем
-    if (wel.hidden) return;
+    const wel = $("#sh-wizard");
+    if (!(S.loaded && S.firstRun)) return;
     const c = R.cfg;
     $$(".wstep", wel).forEach(st => { st.hidden = +st.dataset.step !== W.step; });
     $("#w-stepno").textContent = "Шаг " + W.step + " из 3";
@@ -1692,20 +2566,22 @@ if (typeof module !== "undefined") module.exports = { PROCS, COMPANIES, ROLES, S
     });
     $("#w-back").addEventListener("click", () => { W.step = Math.max(1, W.step - 1); drawWizard(S.R); });
     $("#w-next").addEventListener("click", () => {
-      if (W.step < 3) { W.step++; drawWizard(S.R); $("#welcome").scrollIntoView({ block: "start" }); return; }
+      if (W.step < 3) { W.step++; drawWizard(S.R); $("#sh-wizard .sheet-b").scrollTop = 0; return; }
       if (W.sched === "custom" && !W.days.length) { toast("Отметь хотя бы один рабочий день."); return; }
       const pr = SCHED_PRESETS.find(p => p.id === W.sched);
       const sched = W.sched === "custom" ? { type: "week", days: W.days.slice() }
         : Object.assign({}, pr.sched, pr.sched.type === "cycle" ? { start: $("#w-cstart").value || todayStr() } : { days: pr.sched.days.slice() });
       upd({
         mainProc: W.proc, schedPreset: W.sched, sched,
-        roles: { zam: Object.assign({}, S.cfg.roles.zam, { on: $("#w-zam").checked }), brig: Object.assign({}, S.cfg.roles.brig, { on: $("#w-brig").checked }) }
+        roles: { zam: Object.assign({}, S.cfg.roles.zam, { on: $("#w-zam").checked }), brig: Object.assign({}, S.cfg.roles.brig, { on: $("#w-brig").checked }) },
+        ver: VERSION
       });
       S.firstRun = false;
       if (!S.readOnly) saveCfgNow();
       if (!S.editing && !S.formTouched) S.proc = W.proc;
       render(); haptic("success");
-      toast("Готово. Вноси смену после выхода.");
+      closeSheet("sh-wizard");
+      openStory("start", () => { toast("Готово. Вноси смену после выхода."); maybeTour(S.tab); });
     });
   }
 
