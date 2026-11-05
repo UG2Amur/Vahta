@@ -467,7 +467,6 @@ body[data-style="classic"] .sl-t { font-weight: 700; }
           </div>
         </div>
         <label class="field" for="p-manual" id="p-manual-f" hidden><span>Свой средний %</span><input class="in" id="p-manual" inputmode="decimal" autocomplete="off" placeholder="110"></label>
-        <label class="field" for="p-proc"><span>Процесс для прогноза</span><select class="in" id="p-proc"></select></label>
         <div class="field"><span class="flabel">График</span><div class="seg wrap-seg" id="p-sched" role="group" aria-label="График"></div></div>
         <div class="seg" id="p-stype" role="group" aria-label="Тип своего графика" hidden><button type="button" data-st="week" aria-pressed="true">По дням недели</button><button type="button" data-st="cycle" aria-pressed="false">Цикл «через»</button></div>
         <div class="field" id="p-days-f" hidden><span class="flabel">Рабочие дни</span><div class="days" id="p-days" role="group" aria-label="Рабочие дни"></div></div>
@@ -486,11 +485,10 @@ body[data-style="classic"] .sl-t { font-weight: 700; }
             <select class="in" id="p-advday"><option value="1">понедельник</option><option value="2">вторник</option><option value="3">среда</option><option value="4">четверг</option><option value="5">пятница</option><option value="6">суббота</option><option value="0">воскресенье</option></select>
           </label>
         </div>
-        <p class="hint">Прогноз: каждая смена графика × явка × тариф процесса × средний %. Коридор — разброс твоего % от смены к смене; риск пропусков в него не входит, его задаёт явка.</p>
+        <p class="hint">Прогноз: каждая смена графика × явка × тариф × средний %. Коридор — разброс твоего % от смены к смене; риск пропусков в него не входит, его задаёт явка.</p>
       </div>
     </details>
     <section class="sec" aria-labelledby="s-mon"><h2 class="sec-t" id="s-mon">По месяцам</h2><div class="months" id="months"></div><p class="foot" id="mon-foot"></p></section>
-    <section class="card" aria-labelledby="s-procstat"><h2 class="card-t" id="s-procstat">По процессам</h2><div class="tbl-wrap" id="procs"></div></section>
     <section class="card" aria-labelledby="s-pct">
       <div class="card-h"><h2 class="card-t" id="s-pct">Выработка по сменам</h2></div>
       <span class="note-s" id="pct-note"></span>
@@ -576,7 +574,6 @@ body[data-style="classic"] .sl-t { font-weight: 700; }
     <section class="sec" aria-labelledby="s-work"><h2 class="sec-t" id="s-work">Работа</h2>
       <div class="menu" id="m-work">
         <button type="button" class="mrow" data-act="company"><span class="mi" data-ic="build"></span><span class="mt">Компания и роли<span class="ms" id="m-company-n"></span></span><span class="chev">›</span></button>
-        <button type="button" class="mrow" data-act="procs"><span class="mi" data-ic="list"></span><span class="mt">Процессы и тарифы<span class="ms" id="m-procs-n"></span></span><span class="chev">›</span></button>
         <button type="button" class="mrow" data-act="rates"><span class="mi" data-ic="coin"></span><span class="mt">Ставки и налоги<span class="ms" id="m-rates-n"></span></span><span class="chev">›</span></button>
       </div>
     </section>
@@ -616,7 +613,6 @@ body[data-style="classic"] .sl-t { font-weight: 700; }
         <button type="button" data-kind="sick" aria-pressed="false">Больничный</button>
       </div>
       <div id="work-fields" style="display:flex;flex-direction:column;gap:12px">
-        <div class="field"><span class="flabel">Процесс</span><div class="chips" id="f-proc" role="group" aria-label="Процесс"></div></div>
         <div class="field" id="f-role-f" hidden><span class="flabel">Роль в смене</span><div class="chips" id="f-role" role="group" aria-label="Роль"></div></div>
         <p class="fixnote" id="f-fixnote" hidden></p>
         <label class="field" for="f-pct" id="f-pct-f"><span id="f-pct-l">Выработка за смену</span>
@@ -658,13 +654,12 @@ body[data-style="classic"] .sl-t { font-weight: 700; }
         <label class="field" for="w-tariff"><span>Тариф смены (100%), ₽</span><input class="in" id="w-tariff" inputmode="numeric" autocomplete="off"></label>
       </div>
       <div class="wstep" data-step="2" hidden>
-        <div class="field"><span class="flabel">Где чаще работаешь</span><div class="chips" id="w-proc" role="group" aria-label="Основной процесс"></div></div>
         <div class="field"><span class="flabel">Бываешь на другой роли?</span>
           <div class="chips">
             <label class="chip" for="w-zam"><input type="checkbox" id="w-zam"> ЗамБриг</label>
             <label class="chip" for="w-brig"><input type="checkbox" id="w-brig"> Бригадир</label>
           </div>
-          <span class="hint">Если нет, ничего не отмечай: в форме смены будут только процесс и выработка.</span>
+          <span class="hint">Если нет, ничего не отмечай: в форме смены будут только дата и выработка.</span>
         </div>
       </div>
       <div class="wstep" data-step="3" hidden>
@@ -720,17 +715,6 @@ body[data-style="classic"] .sl-t { font-weight: 700; }
         </div>
         <span class="hint">Включённые роли появятся в форме смены. Оплата смены в роли: фикс + выработка сверху, если была.</span>
       </div>
-    </div>
-  </div>
-</div>
-
-<!-- ===== Шторка: процессы ===== -->
-<div class="ovl" id="sh-procs" hidden>
-  <div class="sheet" role="dialog" aria-labelledby="pr-title">
-    <div class="sheet-h"><h2 class="sheet-t" id="pr-title">Процессы и тарифы</h2><button type="button" class="sheet-x" data-close aria-label="Закрыть">×</button></div>
-    <div class="sheet-b">
-      <p class="w-text">Пустое поле — основной тариф. «%» — тариф × выработка. «Фикс» — одна сумма за смену, процент не нужен.</p>
-      <div class="proc-list" id="s-procs"></div>
     </div>
   </div>
 </div>
@@ -833,7 +817,7 @@ const DEFAULT_CFG = {
   roles: {},             // {zam|brig: {on, fix}} — фикс за смену в роли, выработка идёт сверху
   taxMode: "remainder",  // "remainder" — с остатка после авансов; "all" — со всей выработки
   procs: {},             // {id: {t: тариф или null, m: "pct" | "fixed"}}
-  mainProc: "",          // процесс для прогноза; "" — самый частый
+  mainProc: "",          // не используется с 0.5: участки задаёт бригадир
   endDate: "2026-12-30",
   sched: { type: "week", days: [1, 2, 3, 4, 5, 6] }, // или {type: "cycle", on, off, start}
   schedPreset: "61",
@@ -949,12 +933,8 @@ function compute(records, cfgIn, today) {
   const p = cfg.basis === "manual" || !stBasis.n ? cfg.manualPct : stBasis.mean;
   const sdP = cfg.basis === "manual" ? stAll.sd : stBasis.sd;
 
-  // процесс для прогноза: выбранный или самый частый
-  const freq = new Map();
-  recs.forEach(r => { if (isWork(r) && r.proc) freq.set(r.proc, (freq.get(r.proc) || 0) + 1); });
-  let autoProc = "";
-  for (const [k, n] of freq) if (!autoProc || n > freq.get(autoProc)) autoProc = k;
-  const mainProc = cfg.mainProc || autoProc;
+  // с 0.5 участки задаёт бригадир: прогноз — по основному тарифу. Старые смены с процессом считаются как раньше
+  const autoProc = "", mainProc = "";
   const mainFixed = procMode(cfg, mainProc) === "fixed";
   const mainTariff = procTariff(cfg, mainProc);
   const perShift = mainFixed ? mainTariff : mainTariff * p;
@@ -1081,7 +1061,7 @@ const BADGES = [
   { id: "run5", name: "Пять от 100%", how: "Пять смен подряд от 100%", px: "bolt", emo: "🔥" },
   { id: "p150", name: "Смена от 150%", how: "Сделать смену от 150%", px: "star", emo: "🚀" },
   { id: "streak4", name: "Месяц без пропусков", how: "Вести журнал 4 недели подряд", px: "flag", emo: "🗓️" },
-  { id: "procs3", name: "Мастер на все руки", how: "Поработать на трёх процессах", px: "trophy", emo: "🧰" },
+  { id: "rec3", name: "Три рекорда", how: "Трижды побить свой рекорд выработки", px: "trophy", emo: "🏆" },
   { id: "recon", name: "Всё сверено", how: "Внести зарплату так, чтобы сверка сошлась", px: "check", emo: "✅" }
 ];
 
@@ -1156,10 +1136,9 @@ function gameOf(R) {
   let maxStreak = 0, cur = 0, prevM = null;
   [...byWeek.keys()].sort((a, b) => a - b).forEach(m => { cur = prevM != null && m - prevM === 7 ? cur + 1 : 1; maxStreak = Math.max(maxStreak, cur); prevM = m; });
   // значки
-  const procs = new Set(work.map(r => r.proc).filter(Boolean));
   const got = {
     first: work.length >= 1, s10: work.length >= 10, s50: work.length >= 50, run5: maxRun >= 5,
-    p150: recs.some(r => isPctShift(r, cfg) && r.pct >= 1.5), streak4: maxStreak >= 4, procs3: procs.size >= 3,
+    p150: recs.some(r => isPctShift(r, cfg) && r.pct >= 1.5), streak4: maxStreak >= 4, rec3: records >= 3,
     recon: R.recon.paid > 0 && Math.abs(R.recon.diff) < 1
   };
   // настроение по месяцам
@@ -1265,7 +1244,7 @@ function mascotSvg(mood, size, hat) {
 }
 
 /* ===== Обучение: истории, подсказки по разделам, вопросы и ответы ===== */
-const VERSION = "0.4";
+const VERSION = "0.5";
 const STORIES = [
   { id: "start", label: "Начало", ic: "play", slides: [
     { mascot: "good", k: "Вахтовый помощник", t: "Журнал твоей вахты", d: "После смены вносишь выработку, а помощник считает: сколько заработал, сколько получишь на руки и сколько выйдет к концу вахты." },
@@ -1273,7 +1252,7 @@ const STORIES = [
     { ic: "dots", t: "Пять разделов", d: "<b>Смены</b> — ввод и журнал. <b>Прогноз</b> — сколько выйдет. <b>Выплаты</b> — сверка денег. <b>Прогресс</b> — очки и значки. <b>Ещё</b> — настройки и обучение." }
   ] },
   { id: "shift", label: "Смена", ic: "plus", slides: [
-    { ic: "plus", t: "Как внести смену", d: "Нажми «+ Смена», выбери процесс и впиши процент, например 113. Сумма посчитается сразу, она видна внизу формы." },
+    { ic: "plus", t: "Как внести смену", d: "Нажми «+ Смена» и впиши процент, например 113. Сумма посчитается сразу, она видна внизу формы." },
     { ic: "helmet", t: "Роли и фикс", d: "Если бываешь ЗамБригом или бригадиром, включи роль: «Ещё» → «Компания и роли». За смену в роли платится фикс, а выработка идёт сверху." },
     { ic: "list", t: "Исправить или удалить", d: "Нажми на строку в журнале, и откроется та же форма. Смены можно вносить задним числом, а ещё отмечать выходные и больничные." }
   ] },
@@ -1295,11 +1274,10 @@ const STORIES = [
     { ic: "swap", t: "Excel и перенос", d: "«Ещё» → «Выгрузка и перенос»: скопируй все смены для Excel или бригадира либо перенеси смены из своей таблицы." }
   ] },
   { id: "news", label: "Что нового", ic: "gift", news: true, slides: [
-    { ic: "gift", game: true, k: "Что нового · 0.4", t: "Новый вид", d: "Помощник теперь в общем стиле семейства ботов: тёмный фон, крупные цифры и пиксельный талисман в каске." },
-    { ic: "dots", k: "Что нового · 0.4", t: "Новое меню", d: "Пять разделов: Смены, Прогноз, Выплаты, Прогресс и Ещё. Смена вносится кнопкой «+ Смена», журнал — на «Сменах»." },
-    { ic: "trophy", game: true, k: "Что нового · 0.4", t: "Прогресс", d: "Очки, уровни, серия недель, вызов недели и значки. Всё считается из твоих смен, ничего отдельно вносить не нужно." },
-    { ic: "palette", k: "Что нового · 0.4", t: "Стиль оформления", d: "Пиксельный, сбалансированный или классический. Выбрать — «Ещё» → «Стиль оформления»." },
-    { ic: "qmark", k: "Что нового · 0.4", t: "Обучение", d: "Истории вверху «Смен» и в «Ещё», подсказки с затемнением при первом входе в раздел, вопросы и ответы. Твои смены и настройки на месте." }
+    { ic: "gift", game: true, k: "Что нового · 0.5", t: "Смена — быстрее", d: "Выбирать процесс в смене больше не нужно: дата и процент — и готово. На какой участок поставить, решает бригадир в своём помощнике." },
+    { ic: "chart", k: "Что нового · 0.5", t: "Прогноз проще", d: "Прогноз считается по основному тарифу и твоему среднему проценту. Тариф меняется в «Ещё» → «Ставки и налоги»." },
+    { ic: "check", k: "Что нового · 0.5", t: "Старые смены на месте", d: "Смены с процессами, которые ты уже внёс, посчитаны как раньше — по их тарифам. Ничего переносить не нужно." },
+    { ic: "trophy", game: true, k: "Что нового · 0.5", t: "Новый значок", d: "Вместо «Мастера на все руки» — «Три рекорда»: трижды побей свой рекорд выработки." }
   ] }
 ];
 const TOURS = {
@@ -1307,7 +1285,7 @@ const TOURS = {
     ["#h-hero", "Главная цифра", "Выработка последней смены и сколько она принесла."],
     ["#goalcard", "Цель вахты", "Дорожка от старта до финиша: какая часть цели уже заработана."],
     ["#h-stats", "Коротко о вахте", "Сколько заработано, сколько смен сделано из плана и сколько ещё должны."],
-    ["#add-btn", "Новая смена", "Жми после смены: процесс, процент — и готово."],
+    ["#add-btn", "Новая смена", "Жми после смены: дата, процент — и готово."],
     ["#challenge", "Вызов недели", "Задание на неделю. За выполнение дают очки в «Прогрессе»."],
     ["#log", "Журнал", "Все записи по месяцам. Нажми на строку, чтобы исправить."],
     ["#stories", "Истории", "Короткое обучение. Открой, если что-то непонятно."]
@@ -1333,18 +1311,19 @@ const TOURS = {
   more: [
     ["#m-learn", "Обучение", "Истории, подсказки и ответы на вопросы — здесь."],
     ["#m-look", "Стиль", "Пиксельный, сбалансированный или классический."],
-    ["#m-work", "Работа", "Компания, роли, тарифы процессов и налоги."],
+    ["#m-work", "Работа", "Компания, роли, тариф и налоги."],
     ["#m-data", "Данные", "Выгрузка для Excel и перенос из таблицы."]
   ]
 };
 const FAQ = [
-  ["Почему сумма не совпадает с расчётным листом?", "Помощник считает по тарифу и проценту из настроек. Проверь тариф процесса («Ещё» → «Процессы и тарифы»), фикс роли, премии и штрафы. Налог и комиссия по умолчанию считаются с остатка после авансов, как в таблице; переключатель — в «Выплатах»."],
+  ["Почему сумма не совпадает с расчётным листом?", "Помощник считает по тарифу и проценту из настроек. Проверь тариф («Ещё» → «Ставки и налоги»), фикс роли, премии и штрафы. Налог и комиссия по умолчанию считаются с остатка после авансов, как в таблице; переключатель — в «Выплатах»."],
   ["Как внести смену задним числом?", "Нажми «+ Смена» и выбери дату. Если на эту дату уже есть запись, откроется её правка."],
   ["Процент ещё не известен. Что делать?", "Сохрани смену без процента. Пока она считается как 0 ₽, а в прогнозе — по твоему среднему. Когда узнаешь процент, нажми на строку в журнале и допиши."],
-  ["Как считается прогноз?", "Каждая смена по графику × явка × тариф процесса × твой средний процент. Средний можно взять за всю вахту, за 10 последних смен или задать свой."],
+  ["Как считается прогноз?", "Каждая смена по графику × явка × тариф × твой средний процент. Средний можно взять за всю вахту, за 10 последних смен или задать свой."],
   ["Видит ли кто-то мои смены?", "Нет. Смены лежат в облаке Telegram в твоём аккаунте. Бригадир увидит их, только если ты сам отправишь ему таблицу из «Выгрузки»."],
   ["За что дают очки?", "+10 за каждую смену, +5 за смену от 100%, +20 за новый личный рекорд и награда за вызов недели. Очки считаются из записей: если удалить смену, её очки тоже уйдут."],
   ["Больничный рвёт серию?", "Нет. Неделя засчитывается, если в ней есть любая запись: смена, выходной или больничный."],
+  ["Куда делся выбор процесса?", "С версии 0.5 участки на смену расставляет бригадир в своём помощнике. Тебе достаточно даты и процента. Старые смены с процессами посчитаны как раньше."],
   ["Как поменять вид?", "«Ещё» → «Стиль оформления»: пиксельный, сбалансированный или классический. Смены и настройки от этого не меняются."],
   ["Как выключить подсказки с затемнением?", "В подсказке нажми «Больше не показывать подсказки» или выключи их в «Ещё» → «Подсказки по разделам». Там же их можно включить снова."]
 ];
@@ -1553,7 +1532,7 @@ const FAQ = [
     if (S.loaded && !S.formInit) { S.formInit = true; if (!S.formTouched) fillForm(defaultDate()); }
     applyStyle();
     drawWizard(R);
-    drawShifts(R, G); drawStories(); drawMoney(R); drawForecast(R); drawMonths(R); drawProcs(R); drawLog(R);
+    drawShifts(R, G); drawStories(); drawMoney(R); drawForecast(R); drawMonths(R); drawLog(R);
     drawProgress(R, G); drawMore(R); syncSettings(R); drawStatus(); drawRoleChips(); drawProcChips(); updatePreview();
     if (S.tab === "fc") { drawTraj(R); drawPct(R); }
   }
@@ -1728,8 +1707,6 @@ const FAQ = [
     $("#m-style-n").textContent = STYLES.find(s => s.id === styleOf()).name;
     const roles = ROLES.filter(r => c.roles[r.id] && c.roles[r.id].on).map(r => r.name);
     $("#m-company-n").textContent = companyTitle(c) + (roles.length ? " · " + roles.join(", ") : "");
-    const custom = PROCS.filter(p => c.procs[p.id] && (c.procs[p.id].t > 0 || c.procs[p.id].m === "fixed")).length;
-    $("#m-procs-n").textContent = custom ? `Свои тарифы: ${custom} из ${PROCS.length}` : "Все по основному тарифу " + num(c.tariff) + " ₽";
     $("#m-rates-n").textContent = `Тариф ${num(c.tariff)} ₽ · налог ${pc(c.tax)} + ${pc(c.comm)}`;
     $("#m-tours-sw").classList.toggle("on", !c.tourOff);
     $("#m-tours").setAttribute("aria-pressed", String(!c.tourOff));
@@ -1745,9 +1722,9 @@ const FAQ = [
       $("#fc-sub").textContent = (R.fc.sd > 0 ? "± " + num(R.fc.sd) + " · " : "") + "на руки ≈ " + rub(R.end.total);
     }
     if (f.startN > f.endN) { line.innerHTML = "Конец вахты уже прошёл. Поменяй дату в параметрах прогноза, чтобы посчитать дальше."; $("#fc-scen").hidden = true; return; }
-    const pend = R.pending ? `, включая ${R.pending} ${smen(R.pending)} без %` : "";
+    const pend = R.pending ? `, включая ${R.pending} ${plural(R.pending, "смену", "смены", "смен")} без %` : "";
     const how = R.basis.mainFixed ? "фикс" : pc(R.basis.p, 1);
-    const pname = R.basis.mainProc ? procName(R.basis.mainProc).toLowerCase() + ", " : "";
+    const pname = "";
     line.innerHTML = `Осталось ≈ <b>${Math.round(f.shifts)} ${smen(f.shifts)}</b>${pend} по <b>${rub(R.basis.perShift)}</b> (${pname}${how}), с ${dShort(f.startN)} по ${dShort(f.endN)}: <b>+${rub(f.V)}</b>.`;
     const sc = $("#fc-scen");
     let alt = null;
@@ -1927,15 +1904,6 @@ const FAQ = [
     $("#mon-foot").textContent = `Чистыми = выработка минус ${pc(rate, 1)} (${pc(c.tax)} налог и ${pc(c.comm)} комиссия). Прогнозная часть считается по среднему %, графику и явке из параметров прогноза.`;
   }
 
-  function drawProcs(R) {
-    const el = $("#procs");
-    if (!S.loaded) { el.innerHTML = ""; return; }
-    if (!R.procStats.length) { el.innerHTML = '<div class="chart-empty">Здесь появится сравнение процессов, когда внесёшь смены.</div>'; return; }
-    el.innerHTML = `<table class="procs"><thead><tr><th>Процесс</th><th>Смен</th><th>Ср. %</th><th>За смену</th></tr></thead><tbody>${
-      R.procStats.map(p => `<tr><td>${esc(p.name)}</td><td>${p.n}</td><td>${pc(p.avgPct, 0)}</td><td>${num(p.perShift)}</td></tr>`).join("")
-    }</tbody></table>`;
-  }
-
   function rowHtml(r, c) {
     const n = dnum(r.date), p = parts(n);
     let what;
@@ -1965,7 +1933,7 @@ const FAQ = [
     const el = $("#log");
     if (!S.loaded) { el.innerHTML = '<div class="empty">Загружаю смены…</div>'; return; }
     if (!R.recs.length) {
-      el.innerHTML = '<div class="empty"><b>Смен пока нет</b><span>После выхода нажми «+ Смена»: дата, процесс и процент. Сумма, прогноз и очки посчитаются сами.</span></div>';
+      el.innerHTML = '<div class="empty"><b>Смен пока нет</b><span>После выхода нажми «+ Смена»: дата и процент. Сумма, прогноз и очки посчитаются сами.</span></div>';
       return;
     }
     const groups = new Map();
@@ -1987,18 +1955,12 @@ const FAQ = [
   function fillSelects() {
     const opts = COMPANIES.map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join("");
     $("#w-company").innerHTML = opts; $("#s-company").innerHTML = opts;
-    $("#s-procs").innerHTML = PROCS.map(p => `<div class="proc-row" data-proc="${p.id}">
-      <span class="pn">${p.name}</span>
-      <input class="in" id="sp-${p.id}" inputmode="numeric" autocomplete="off" aria-label="Тариф: ${p.name}">
-      <div class="seg mini" role="group" aria-label="Оплата: ${p.name}"><button type="button" data-pm="pct" aria-pressed="true">%</button><button type="button" data-pm="fixed" aria-pressed="false">Фикс</button></div>
-    </div>`).join("");
     const order = [1, 2, 3, 4, 5, 6, 0];
     const days = order.map(d => `<button type="button" data-day="${d}" aria-pressed="false">${WD[d]}</button>`).join("");
     $("#p-days").innerHTML = days; $("#w-days").innerHTML = days;
     const sp = SCHED_PRESETS.map(p => `<button type="button" data-sp="${p.id}" aria-pressed="false">${p.label}</button>`).join("");
     $("#p-sched").innerHTML = sp; $("#w-sched").innerHTML = sp;
     $("#faq").innerHTML = FAQ.map(([q, a]) => `<details><summary>${q}</summary><p>${a}</p></details>`).join("");
-    $("#w-proc").innerHTML = PROCS.map(p => `<button type="button" data-proc="${p.id}" aria-pressed="false">${p.name}</button>`).join("");
   }
 
   function syncSettings(R) {
@@ -2010,11 +1972,6 @@ const FAQ = [
     $("#p-b-man").textContent = pc(c.manualPct, 1);
     $("#p-manual-f").hidden = c.basis !== "manual";
     setVal("p-manual", pctIn(c.manualPct));
-    const pp = $("#p-proc");
-    const autoTxt = "Автоматически" + (R.basis.autoProc ? ` (чаще всего: ${procName(R.basis.autoProc).toLowerCase()})` : "");
-    const want = `<option value="">${esc(autoTxt)}</option>` + PROCS.map(p => `<option value="${p.id}">${p.name}</option>`).join("");
-    if (pp.dataset.sig !== autoTxt) { pp.innerHTML = want; pp.dataset.sig = autoTxt; }
-    setVal("p-proc", c.mainProc || "");
     const sch = c.sched, cyc = sch.type === "cycle", custom = c.schedPreset === "custom";
     $$("#p-sched button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.sp === c.schedPreset)));
     $("#p-stype").hidden = !custom;
@@ -2032,13 +1989,6 @@ const FAQ = [
     $("#s-cname-f").hidden = c.company !== "other";
     setVal("s-cname", c.companyName || "");
     setVal("s-inn", c.inn || "");
-    PROCS.forEach(p => {
-      const o = c.procs[p.id] || {};
-      const inp = document.getElementById("sp-" + p.id);
-      inp.placeholder = num(c.tariff);
-      setVal("sp-" + p.id, o.t > 0 ? String(o.t) : "");
-      $$(`.proc-row[data-proc="${p.id}"] button`).forEach(b => b.setAttribute("aria-pressed", String(b.dataset.pm === (o.m === "fixed" ? "fixed" : "pct"))));
-    });
     setVal("s-tariff", String(c.tariff));
     ROLES.forEach(r => {
       const o = c.roles[r.id], cb = document.getElementById("r-" + r.id + "-on");
@@ -2164,7 +2114,6 @@ const FAQ = [
       else if (a === "faq") openSheet("sh-faq");
       else if (a === "style") { drawStyleCards(); openSheet("sh-style"); }
       else if (a === "company") openSheet("sh-company");
-      else if (a === "procs") openSheet("sh-procs");
       else if (a === "rates") openSheet("sh-rates");
       else if (a === "data") openSheet("sh-data");
       else if (a === "tours") {
@@ -2303,21 +2252,13 @@ const FAQ = [
     const last = Array.from(S.recs.keys()).sort().pop();
     return dstr(Math.max(dnum(last), dnum(t)) + 1);
   }
-  function lastProc() {
-    const w = Array.from(S.recs.values()).filter(r => r.kind === "work" && r.proc).sort((a, b) => (a.date < b.date ? 1 : -1));
-    return w.length ? w[0].proc : (S.cfg.mainProc || "");
-  }
   function setKind(k) {
     S.kind = k;
     $$("#f-kind button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.kind === k)));
     $("#work-fields").hidden = k !== "work";
   }
-  function drawProcChips() {
-    const el = $("#f-proc");
-    if (!el.children.length) el.innerHTML = PROCS.map(p => `<button type="button" data-proc="${p.id}" aria-pressed="false">${p.name}</button>`).join("");
-    $$("button", el).forEach(b => b.setAttribute("aria-pressed", String(b.dataset.proc === S.proc)));
-    procUi();
-  }
+  // участки с 0.5 задаёт бригадир: у старой смены процесс сохраняется и считается как раньше, у новой — пусто
+  function drawProcChips() { procUi(); }
   function drawRoleChips() {
     const c = S.cfg, el = $("#f-role");
     const roles = ROLES.filter(r => (c.roles[r.id] && c.roles[r.id].on) || S.role === r.id);
@@ -2339,7 +2280,7 @@ const FAQ = [
     const r = S.recs.get(date);
     S.editing = r ? date : null;
     setKind(r ? r.kind : "work");
-    S.proc = r && r.kind === "work" ? (r.proc || "") : lastProc();
+    S.proc = r && r.kind === "work" ? (r.proc || "") : "";
     $("#f-pct").value = r && r.pct != null ? pctIn(r.pct) : "";
     S.role = r && r.kind === "work" ? roleOf(r) : "";
     $("#f-fixed").value = r && hasFixed(r) ? String(r.fixed) : "";
@@ -2407,11 +2348,6 @@ const FAQ = [
 
   function bindForm() {
     $("#f-kind").addEventListener("click", e => { const b = e.target.closest("button[data-kind]"); if (!b) return; setKind(b.dataset.kind); drawRoleChips(); updatePreview(); });
-    $("#f-proc").addEventListener("click", e => {
-      const b = e.target.closest("button[data-proc]"); if (!b) return;
-      S.proc = S.proc === b.dataset.proc ? "" : b.dataset.proc;
-      drawProcChips(); updatePreview();
-    });
     ["f-pct", "f-adv", "f-fixed", "f-note", "f-bonus", "f-fine", "f-paid"].forEach(id => $("#" + id).addEventListener("input", () => { showErr(""); updatePreview(); }));
     $("#f-role").addEventListener("click", e => {
       const b = e.target.closest("button[data-role]"); if (!b) return;
@@ -2537,7 +2473,6 @@ const FAQ = [
     setVal("w-company", c.company);
     $("#w-cname-f").hidden = c.company !== "other";
     setVal("w-tariff", String(c.tariff));
-    $$("#w-proc button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.proc === W.proc)));
     $$("#w-sched button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.sp === W.sched)));
     const pr = SCHED_PRESETS.find(p => p.id === W.sched);
     $("#w-cstart-f").hidden = !(pr && pr.sched && pr.sched.type === "cycle");
@@ -2556,7 +2491,6 @@ const FAQ = [
     $("#w-end").addEventListener("change", e => { if (/^\d{4}-\d{2}-\d{2}$/.test(e.target.value)) upd({ endDate: e.target.value }); });
     $("#w-adv").addEventListener("input", e => { const v = parseMoney(e.target.value); if (v == null || (!Number.isNaN(v) && v >= 0)) upd({ advAmount: v || 0 }); });
     $("#w-advday").addEventListener("change", e => upd({ advDay: +e.target.value }));
-    $("#w-proc").addEventListener("click", e => { const b = e.target.closest("button[data-proc]"); if (!b) return; W.proc = W.proc === b.dataset.proc ? "" : b.dataset.proc; drawWizard(S.R); });
     $("#w-sched").addEventListener("click", e => { const b = e.target.closest("button[data-sp]"); if (!b) return; W.sched = b.dataset.sp; drawWizard(S.R); });
     $("#w-days").addEventListener("click", e => {
       const b = e.target.closest("button[data-day]"); if (!b) return;
@@ -2572,13 +2506,12 @@ const FAQ = [
       const sched = W.sched === "custom" ? { type: "week", days: W.days.slice() }
         : Object.assign({}, pr.sched, pr.sched.type === "cycle" ? { start: $("#w-cstart").value || todayStr() } : { days: pr.sched.days.slice() });
       upd({
-        mainProc: W.proc, schedPreset: W.sched, sched,
+        mainProc: "", schedPreset: W.sched, sched,
         roles: { zam: Object.assign({}, S.cfg.roles.zam, { on: $("#w-zam").checked }), brig: Object.assign({}, S.cfg.roles.brig, { on: $("#w-brig").checked }) },
         ver: VERSION
       });
       S.firstRun = false;
       if (!S.readOnly) saveCfgNow();
-      if (!S.editing && !S.formTouched) S.proc = W.proc;
       render(); haptic("success");
       closeSheet("sh-wizard");
       openStory("start", () => { toast("Готово. Вноси смену после выхода."); maybeTour(S.tab); });
@@ -2648,24 +2581,6 @@ const FAQ = [
       e.target.classList.toggle("bad", !ok);
       setCfg({ inn: v });
     });
-    $("#s-procs").addEventListener("click", e => {
-      const b = e.target.closest("button[data-pm]"); if (!b) return;
-      const id = b.closest(".proc-row").dataset.proc;
-      const procs = Object.assign({}, S.cfg.procs);
-      procs[id] = Object.assign({}, procs[id] || {}, { m: b.dataset.pm });
-      setCfg({ procs });
-    });
-    $("#s-procs").addEventListener("input", e => {
-      const row = e.target.closest(".proc-row"); if (!row) return;
-      const id = row.dataset.proc, v = parseMoney(e.target.value);
-      const ok = v == null || (!Number.isNaN(v) && v > 0);
-      e.target.classList.toggle("bad", !ok);
-      if (!ok) return;
-      const procs = Object.assign({}, S.cfg.procs);
-      procs[id] = Object.assign({}, procs[id] || {}, { t: v || null });
-      setCfg({ procs });
-    });
-    $("#p-proc").addEventListener("change", e => setCfg({ mainProc: e.target.value }));
     const bindNum = (id, parse, key, ok) => $("#" + id).addEventListener("input", e => {
       const v = parse(e.target.value);
       const good = v != null && !Number.isNaN(v) && (!ok || ok(v));
